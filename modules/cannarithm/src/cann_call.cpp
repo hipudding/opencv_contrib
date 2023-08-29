@@ -80,14 +80,38 @@ void aclTwoInputs(const AclMat& src1, const AclMat& src2, AclMat& dst, const cha
     }
 }
 
+void getDim(const char* type, const AclMat& mat, int64_t* dims)
+{
+    dims[0] = 1;
+    if (strcmp(type, "NCHW") == 0)
+    {
+       dims[1] = mat.channels();
+       dims[2] = mat.rows;
+       dims[3] = mat.cols;
+    }
+    else if (strcmp(type, "NHWC") == 0)
+    {
+       dims[1] = mat.rows;
+       dims[2] = mat.cols;
+       dims[3] = mat.channels();
+    }
+    else
+    {
+        CV_Error(Error::AscendApiCallError, "Unknown/unsupported matrix format");
+    }
+}
+
 void transData(const AclMat& src, AclMat& dst, const char* from, const char* to, AclStream& stream)
 {
     CannPreparation prepare;
     CANN_PREPARE_ADD_ATTR(prepare, String, "src_format", from);
     CANN_PREPARE_ADD_ATTR(prepare, String, "dst_format", to);
 
-    int64_t dimSrc[] = {1, src.channels(), src.rows, src.cols};
-    int64_t dimDst[] = {1, dst.rows, dst.cols, dst.channels()};
+    int64_t dimSrc[4];
+    int64_t dimDst[4];
+
+    getDim(from, src, dimSrc);
+    getDim(to, dst, dimDst);
 
     CANN_PREPARE_INPUTDESC(prepare, getACLType(src.depth()), sizeof(dimSrc) / sizeof(dimSrc[0]),
                            dimSrc, ACL_FORMAT_NCHW);

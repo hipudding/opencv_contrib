@@ -36,6 +36,8 @@ struct AclAttribute
 DEFINE_ATTR(Float, float);
 DEFINE_ATTR(String, const char*);
 
+void getDim(const char* type, const AclMat& mat, int64_t* dims);
+
 static std::vector<AclAttribute*> emptyattr;
 void aclOneInput(const AclMat& src, AclMat& dst, const char* op,
                  AclStream& stream = AclStream::Null(),

@@ -222,8 +222,8 @@ CV_EXPORTS_W void addWeighted(InputArray src1, double alpha, InputArray src2, do
 @sa cv::merge cv::cuda::merge 
  */
 CV_EXPORTS void merge(const AclMat* src, size_t n, OutputArray dst, AclStream& stream = AclStream::Null());
-///** @overload */
-//CV_EXPORTS_W void merge(const std::vector<AclMat>& src, OutputArray dst, AclStream& stream = AclStream::Null());
+/** @overload */
+CV_EXPORTS_W void merge(const std::vector<AclMat>& src, OutputArray dst, AclStream& stream = AclStream::Null());
 
 /** @brief Copies each plane of a multi-channel matrix into an array.
 
@@ -233,9 +233,9 @@ CV_EXPORTS void merge(const AclMat* src, size_t n, OutputArray dst, AclStream& s
 
 @sa cv::split cv::cuda::split
  */
-//CV_EXPORTS void split(InputArray src, AclMat* dst, AclStream& stream = AclStream::Null());
-///** @overload */
-//CV_EXPORTS_W void split(InputArray src, CV_OUT std::vector<AclMat>& dst, AclStream& stream = AclStream::Null());
+CV_EXPORTS void split(InputArray src, AclMat* dst, AclStream& stream = AclStream::Null());
+/** @overload */
+CV_EXPORTS_W void split(InputArray src, CV_OUT std::vector<AclMat>& dst, AclStream& stream = AclStream::Null());
 
 //! @} cannarithm_core
 
