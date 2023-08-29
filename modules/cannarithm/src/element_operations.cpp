@@ -9,8 +9,22 @@ namespace cv
 {
 namespace cann
 {
-void opMatMat(AclMat&, AclMat&, AclMat&, const char*, AclStream& stream = AclStream::Null());
-void opMatMat(AclMat& src1, AclMat& src2, AclMat& dst, const char* op, AclStream& stream)
+
+#define OpScalar(name, op)                                                     \
+    void name(const AclMat& arr, double scale, AclMat& dst,                    \
+              AclStream& stream = AclStream::Null());                          \
+    void name(const AclMat& arr, double scale, AclMat& dst, AclStream& stream) \
+    {                                                                          \
+        AclFloatAttribute scaleOP("value", scale);                             \
+        std::vector<AclAttribute*> attrs{&scaleOP};                            \
+        aclOneInput(arr, dst, #op, stream, attrs);                             \
+    }
+
+OpScalar(muls, Muls);
+OpScalar(adds, Adds);
+
+void opMat(AclMat&, AclMat&, AclMat&, const char*, AclStream& stream = AclStream::Null());
+void opMat(AclMat& src1, AclMat& src2, AclMat& dst, const char* op, AclStream& stream)
 {
     aclTwoInputs(src1, src2, dst, op, stream);
 }
@@ -28,10 +42,10 @@ void opMatScalar(AclMat& src, AclMat& dst, bool inv, Scalar s, const char* op, A
         aclTwoInputs(src, scAclMat, dst, op, stream);
 }
 
-void arithm_op(InputArray _src1, InputArray _src2, OutputArray _dst, InputArray _mask, float scale, int dtype,
-               const char* op, AclStream& stream = AclStream::Null());
-void arithm_op(InputArray _src1, InputArray _src2, OutputArray _dst, InputArray _mask, float scale,  int dtype,
-               const char* op, AclStream& stream)
+void arithm_op(InputArray _src1, InputArray _src2, OutputArray _dst, InputArray _mask, float scale,
+               int dtype, const char* op, AclStream& stream = AclStream::Null());
+void arithm_op(InputArray _src1, InputArray _src2, OutputArray _dst, InputArray _mask, float scale,
+               int dtype, const char* op, AclStream& stream)
 {
     const int kind1 = _src1.kind();
     const int kind2 = _src2.kind();
@@ -79,7 +93,7 @@ void arithm_op(InputArray _src1, InputArray _src2, OutputArray _dst, InputArray 
     else if (isScalar2)
         opMatScalar(src1, dst, false, val, op, stream);
     else
-        opMatMat(src1, src2, dst, op, stream);
+        opMat(src1, src2, dst, op, stream);
 
     // TODO implement emtpy for AclMat in InputArray
     AclMat mask = getInputMat(_mask, stream);
@@ -106,10 +120,10 @@ void arithm_op(InputArray _src1, InputArray _src2, OutputArray _dst, InputArray 
         arithm_op(expandedMask, expandedMask, divRet, noArray(), 1, -1, "Div", stream);
         AclMat dstCopy = dst;
         // TODO dst memory and dskCopy mempry point to a same memory area, seems no harm yet.
-        arithm_op(dstCopy, divRet, dst, noArray(), 1,  -1, "Mul", stream);
+        arithm_op(dstCopy, divRet, dst, noArray(), 1, -1, "Mul", stream);
     }
 
-    if(scale != 1)
+    if (scale != 1)
     {
         AclMat dstCpy = dst;
         AclFloatAttribute scaleOP("value", scale);
@@ -132,12 +146,14 @@ void subtract(InputArray src1, InputArray src2, OutputArray dst, InputArray mask
     arithm_op(src1, src2, dst, mask, 1, dtype, "Sub", stream);
 }
 
-void multiply(InputArray src1, InputArray src2, OutputArray dst, float scale, int dtype, AclStream& stream)
+void multiply(InputArray src1, InputArray src2, OutputArray dst, float scale, int dtype,
+              AclStream& stream)
 {
     arithm_op(src1, src2, dst, noArray(), scale, dtype, "Mul", stream);
 }
 
-void divide(InputArray src1, InputArray src2, OutputArray dst, float scale, int dtype, AclStream& stream)
+void divide(InputArray src1, InputArray src2, OutputArray dst, float scale, int dtype,
+            AclStream& stream)
 {
     arithm_op(src1, src2, dst, noArray(), scale, dtype, "Div", stream);
 }
@@ -160,6 +176,42 @@ void bitwise_xor(InputArray src1, InputArray src2, OutputArray dst, InputArray m
     arithm_op(src1, src2, dst, mask, 1, -1, "BitwiseXor", stream);
 }
 
+void bitwise_not(InputArray _src, OutputArray dst, InputArray mask, AclStream& stream)
+{
+    AclMat one, src;
+    src = getInputMat(_src);
+    one.one(src.size(), src.type());
+
+    arithm_op(src, one, dst, mask, 1, -1, "BitwiseXor", stream);
+}
+
+void addWeighted(InputArray _src1, double alpha, InputArray _src2, double beta, double gamma,
+                 OutputArray _dst, int dtype, AclStream& stream)
+{
+    AclMat src1, src2;
+
+    src1 = getInputMat(_src1, stream);
+    src2 = getInputMat(_src2, stream);
+
+    if (dtype < 0)
+        dtype = src1.depth();
+
+    CV_Assert(src2.depth() == src1.depth() && src2.size() == src1.size() &&
+              src1.channels() == src2.channels());
+
+    int type = CV_MAKE_TYPE(dtype, src1.channels());
+    AclMat dst = getOutputMat(_dst, src1.rows, src1.cols, type);
+
+    // Consider overflow, should extend type or not?
+    AclMat src1Weighted(src1.size(), type), src2Weighted(src1.size(), type),
+        srcWeightedSum(src1.size(), type);
+    muls(src1, alpha, src1Weighted);
+    muls(src2, beta, src2Weighted);
+    opMat(src1Weighted, src2Weighted, srcWeightedSum, "Add", stream);
+    adds(srcWeightedSum, gamma, dst);
+
+    syncOutput(dst, _dst);
+}
 
 } // namespace cann
 } // namespace cv

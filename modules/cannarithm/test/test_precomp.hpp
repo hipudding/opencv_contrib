@@ -7,6 +7,7 @@
 
 #include "opencv2/ts.hpp"
 #include "opencv2/cann.hpp"
+#include "opencv2/ts/cuda_test.hpp"
 
 using namespace cv::cann;
 #undef EXPECT_MAT_NEAR

@@ -44,7 +44,8 @@ void aclOneInput(const AclMat& src, AclMat& dst, const char* op,
 void aclTwoInputs(const AclMat& src1, const AclMat& src2, AclMat& dst, const char* op,
                   AclStream& stream = AclStream::Null());
 
-void transNCHWToNHWC(const AclMat& src, AclMat& dst, AclStream& stream = AclStream::Null());
+void transData(const AclMat& src, AclMat& dst, const char* from, const char* to,
+               AclStream& stream = AclStream::Null());
 
 } // namespace cann
 } // namespace cv

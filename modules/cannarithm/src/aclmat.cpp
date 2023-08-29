@@ -283,7 +283,33 @@ void AclMat::expandTo(CV_OUT AclMat& dst, int chs, AclStream& stream) const
 
     dst.create(rows, cols, CV_MAKE_TYPE(depth(), chs));
 
-    transNCHWToNHWC(NCHW_mat, dst, stream);
+    transData(NCHW_mat, dst, "NCHW", "NHWC", stream);
+}
+
+AclMat& AclMat::one(int _rows, int _cols, int type, Allocator* _allocator) {
+    create(_rows, _cols, type);
+    CV_UNUSED(_allocator);
+    size_t totalBytes = _rows * step;
+    CV_ACL_SAFE_CALL(aclrtMemset(data, totalBytes, 0xFF, totalBytes));
+
+    return *this;
+}
+
+AclMat& AclMat::one(Size size, int type, Allocator* _allocator) {
+    return one(size.height, size.width, type, _allocator);
+}
+
+AclMat& AclMat::zero(int _rows, int _cols, int type, Allocator* _allocator){
+    create(_rows, _cols, type);
+    CV_UNUSED(_allocator);
+    size_t totalBytes = _rows * step;
+    CV_ACL_SAFE_CALL(aclrtMemset(data, totalBytes, 0, totalBytes));
+
+    return *this;
+}
+
+AclMat& AclMat::zero(Size size, int type, Allocator* _allocator){
+    return zero(size.height, size.width, type, _allocator);
 }
 
 AclStream wrapStream(size_t aclStreamAddress)

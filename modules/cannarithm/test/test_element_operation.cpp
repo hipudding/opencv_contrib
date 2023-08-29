@@ -3,7 +3,6 @@
 // of this distribution and at http://opencv.org/license.html.
 
 #include "test_precomp.hpp"
-#include "opencv2/ts/cuda_test.hpp"
 #include "opencv2/cann_arithm.hpp"
 
 namespace opencv_test
@@ -133,5 +132,42 @@ TEST_MAT_OP_SCALAR(2, bitwise_or, genMask());
 TEST_MAT_OP_SCALAR(2, bitwise_xor, genMask());
 TEST_MAT_OP_SCALAR(2, multiply, randomNum(), -1);
 TEST_MAT_OP_SCALAR(2, divide, randomNum(), -1);
+
+TEST(ELEMENTWISE_OP, MAT_BITWISE_NOT_1)
+{
+    Mat cpuOpRet, checker, cpuMat = randomMat(10, 10, CV_32SC3);
+
+    AclMat aclMat, aclOpRet;
+    aclMat.upload(cpuMat);
+
+    cv::bitwise_not(cpuMat, cpuOpRet);
+    cv::cann::bitwise_not(aclMat, aclOpRet);
+    aclOpRet.download(checker);
+
+    EXPECT_MAT_NEAR(cpuOpRet, checker, 0.0);
+
+    cv::cann::setDevice(DEVICE_ID);
+    cv::cann::resetDevice();
+}
+
+TEST(ELEMENTWISE_OP, MAT_ADD_WEIGHTED_1)
+{
+    Mat cpuOpRet, checker, cpuMat1 = Mat::ones(5, 5, CV_32S),
+                           cpuMat2 = Mat::ones(5, 5, CV_32S);
+
+    AclMat aclMat1, aclMat2, aclOpRet;
+    aclMat1.upload(cpuMat1);
+    aclMat2.upload(cpuMat1);
+
+    cv::addWeighted(cpuMat1, 2, cpuMat2, 3, 5, cpuOpRet);
+    cv::cann::addWeighted(aclMat1, 2, aclMat2, 3, 5, aclOpRet);
+    aclOpRet.download(checker);
+
+    EXPECT_MAT_NEAR(cpuOpRet, checker, 0.0);
+
+    cv::cann::setDevice(DEVICE_ID);
+    cv::cann::resetDevice();
+}
+
 } // namespace
 } // namespace opencv_test

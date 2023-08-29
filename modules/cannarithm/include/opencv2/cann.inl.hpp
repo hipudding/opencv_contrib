@@ -86,6 +86,12 @@ inline void AclMat::release()
     refcount = 0;
 }
 
+inline
+bool AclMat::isContinuous() const
+{
+    return (flags & Mat::CONTINUOUS_FLAG) != 0;
+}
+
 inline size_t AclMat::elemSize() const { return CV_ELEM_SIZE(flags); }
 
 inline size_t AclMat::elemSize1() const { return CV_ELEM_SIZE1(flags); }

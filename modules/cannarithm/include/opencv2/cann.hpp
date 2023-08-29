@@ -126,6 +126,10 @@ public:
     //! decreases reference counter, deallocate the data when reference counter reaches 0
     CV_WRAP void release();
 
+    //! returns true iff the AclMat data is continuous
+    //! (i.e. when there are no gaps between successive rows)
+    CV_WRAP bool isContinuous() const;
+
     //! returns element size in bytes
     CV_WRAP size_t elemSize() const;
 
@@ -160,6 +164,15 @@ public:
     //! expand one channel mat to multi-channels (Non-Blocking call)
     //! @note, source mat must only have one channel, copy value to all channels.
     CV_WRAP void expandTo(CV_OUT AclMat& dst, int channels, AclStream& stream) const;
+
+    // Not one but 255 ,ones, static function. see MatExpr
+    CV_WRAP AclMat& one(int rows, int cols, int type, AclMat::Allocator* allocator = AclMat::defaultAllocator());
+
+    CV_WRAP AclMat& one(Size size, int type, AclMat::Allocator* allocator = AclMat::defaultAllocator());
+
+    CV_WRAP AclMat& zero(int rows, int cols, int type, AclMat::Allocator* allocator = AclMat::defaultAllocator());
+
+    CV_WRAP AclMat& zero(Size size, int type, AclMat::Allocator* allocator = AclMat::defaultAllocator());
 
     /*! includes several bit-fields:
      - the magic signature
