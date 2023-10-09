@@ -13,15 +13,15 @@ namespace cann
 {
 
 /**
-  @addtogroup cann
-  @{
-    @defgroup cannops Operations for Ascend Backend.
+    @addtogroup cann
     @{
-        @defgroup cannops_elem Per-element Operations
-        @defgroup cannops_core Core Operations on Matrices
-        @defgroup cannimgproc Image Processing
+        @defgroup cannops Operations for Ascend Backend.
+        @{
+                @defgroup cannops_elem Per-element Operations
+                @defgroup cannops_core Core Operations on Matrices
+                @defgroup cannimgproc Image Processing
+        @}
     @}
-  @}
  */
 
 //! @addtogroup cannops_elem
@@ -306,6 +306,23 @@ and the rows and cols are switched for ROTATE_90_CLOCKWISE and ROTATE_90_COUNTER
 */
 CV_EXPORTS_W void rotate(InputArray src, OutputArray dst, int rotateCode,
                          AscendStream& stream = AscendStream::Null());
+
+/** @brief Resizes an image src down to or up to the specified size.
+@param src    input image
+@param dst    output image; it has the size dsize (when it is non-zero) or the size computed from
+src.size(), fx, and fy; the type of dst is the same as of src.
+@param dsize  output image size; if it equals zero, it is computed as:
+                                 \f[𝚍𝚜𝚒𝚣𝚎 = 𝚂𝚒𝚣𝚎(𝚛𝚘𝚞𝚗𝚍(𝚏𝚡*𝚜𝚛𝚌.𝚌𝚘𝚕𝚜), 𝚛𝚘𝚞𝚗𝚍(𝚏𝚢*𝚜𝚛𝚌.𝚛𝚘𝚠𝚜))\f]
+                                 Either dsize or both fx and fy must be non-zero.
+@param fx     scale factor along the horizontal axis; when it equals 0, it is computed as
+\f[(𝚍𝚘𝚞𝚋𝚕𝚎)𝚍𝚜𝚒𝚣𝚎.𝚠𝚒𝚍𝚝𝚑/𝚜𝚛𝚌.𝚌𝚘𝚕𝚜\f]
+
+@param fy     scale factor along the vertical axis; when it equals 0, it is computed as
+\f[(𝚍𝚘𝚞𝚋𝚕𝚎)𝚍𝚜𝚒𝚣𝚎.𝚑𝚎𝚒𝚐𝚑𝚝/𝚜𝚛𝚌.𝚛𝚘𝚠𝚜\f]
+@param interpolation    interpolation method(see **cv.cann.InterpolationFlags**)
+@sa cv::resize
+*/
+
 //! interpolation algorithm
 enum InterpolationFlags
 {
@@ -326,6 +343,16 @@ enum InterpolationFlags
 CV_EXPORTS_W void resize(InputArray _src, OutputArray _dst, Size dsize, double inv_scale_x,
                          double inv_scale_y, int interpolation,
                          AscendStream& stream = AscendStream::Null());
+
+/** @brief crop a 2D array.
+The function crops the matrix by given cv::Rect.
+Output matrix must be of the same depth as input one, size is specified by given rect size.
+
+@param src input array.
+@param rect a rect to crop a array to
+
+@sa cv::gapi::crop 
+*/
 CV_EXPORTS_W AscendMat crop(InputArray _src, const Rect& rect,
                             AscendStream& stream = AscendStream::Null());
 //! @} cannops_core
