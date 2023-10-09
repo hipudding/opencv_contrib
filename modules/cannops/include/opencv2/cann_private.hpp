@@ -25,6 +25,8 @@ void transpose(const AscendMat& src, int64_t* perm, AscendMat& dst, AscendStream
 void flip(const AscendMat& src, std::vector<int32_t>& asixs, AscendMat& dst, AscendStream& stream);
 void merge(const AscendMat* src, size_t n, AscendMat& dst, AscendStream& stream);
 void split(const AscendMat& src, AscendMat* dst, AscendStream& stream);
+void resize(AscendMat& src, AscendMat& dst, const int32_t* dstSize, int interpolation,
+            AscendStream& stream);
 
 double threshold(AscendMat& src, AscendMat& dst, double thresh, double maxval, int type,
                  AscendStream& stream);

@@ -106,10 +106,10 @@ CV_EXPORTS_W void multiply(Scalar src1, InputArray src2, OutputArray dst, float 
 CV_EXPORTS_W void divide(InputArray src1, InputArray src2, OutputArray dst, float scale = 1,
                          int dtype = -1, AscendStream& stream = AscendStream::Null());
 #ifdef NEVER_DEFINED
-CV_EXPORTS_W void divide(InputArray src1, Scalar src2, OutputArray dst, float scale = 1, int dtype = -1,
-                         AscendStream& stream = AscendStream::Null());
-CV_EXPORTS_W void divide(Scalar src1, InputArray src2, OutputArray dst, float scale = 1, int dtype = -1,
-                         AscendStream& stream = AscendStream::Null());
+CV_EXPORTS_W void divide(InputArray src1, Scalar src2, OutputArray dst, float scale = 1,
+                         int dtype = -1, AscendStream& stream = AscendStream::Null());
+CV_EXPORTS_W void divide(Scalar src1, InputArray src2, OutputArray dst, float scale = 1,
+                         int dtype = -1, AscendStream& stream = AscendStream::Null());
 #endif
 
 /** @brief Performs a per-element bitwise conjunction of two matrices (or of matrix and scalar).
@@ -306,6 +306,28 @@ and the rows and cols are switched for ROTATE_90_CLOCKWISE and ROTATE_90_COUNTER
 */
 CV_EXPORTS_W void rotate(InputArray src, OutputArray dst, int rotateCode,
                          AscendStream& stream = AscendStream::Null());
+//! interpolation algorithm
+enum InterpolationFlags
+{
+    /** nearest neighbor interpolation */
+    INTER_NEAREST = 0,
+    /** bilinear interpolation */
+    INTER_LINEAR = 1,
+    /** bicubic interpolation */
+    INTER_CUBIC = 2,
+    /** resampling using pixel area relation. It may be a preferred method for image decimation, as
+    it gives moire'-free results. But when the image is zoomed, it is similar to the INTER_NEAREST
+    method. */
+    INTER_AREA = 3,
+    /** mask for interpolation codes */
+    INTER_MAX = 7,
+};
+
+CV_EXPORTS_W void resize(InputArray _src, OutputArray _dst, Size dsize, double inv_scale_x,
+                         double inv_scale_y, int interpolation,
+                         AscendStream& stream = AscendStream::Null());
+CV_EXPORTS_W AscendMat crop(InputArray _src, const Rect& rect,
+                            AscendStream& stream = AscendStream::Null());
 //! @} cannops_core
 
 //! @addtogroup cannimgproc

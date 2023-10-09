@@ -185,5 +185,90 @@ void rotate(InputArray _src, OutputArray _dst, int rotateMode, AscendStream& str
     syncOutput(dst, _dst, stream);
 }
 
+AscendMat crop(InputArray _src, const Rect& rect, AscendStream& stream)
+{
+    AscendMat src = getInputMat(_src, stream);
+    AscendMat dst, sizeSrcNpu;
+
+    // left-up conner
+    int x = rect.x, y = rect.y, width = rect.width, height = rect.height;
+    int64_t offset[] = {y, x, 0};
+
+    CV_Assert(x + width <= src.cols && y + height <= src.rows);
+    int16_t size1[] = {1, src.channels(), height, width};
+    dst.create(height, width, src.type());
+
+    Mat sizeSrc(height, width, src.type(), size1);
+    sizeSrcNpu.upload(sizeSrc);
+
+    OperatorRunner runner;
+    runner.setOp("Crop")
+        .addInput(src, "x")
+        .addInput(sizeSrcNpu, "size")
+        .addAttr(1, "axis")
+        .addAttr(offset, 3, "offsets")
+        .addOutput(dst, "y")
+        .run(stream);
+    return dst;
+}
+
+void resize(AscendMat& src, AscendMat& dst, const int32_t* dstSize, int interpolation,
+            AscendStream& stream)
+{
+    OperatorRunner runner;
+    int64_t dims[] = {2};
+    char const* mode;
+    switch (interpolation)
+    {
+        case INTER_CUBIC:
+            mode = "ResizeBicubic";
+            break;
+        case INTER_AREA:
+            mode = "ResizeArea";
+            break;
+        default:
+            break;
+    }
+
+    runner.setOp(mode)
+        .addInput(src, "images")
+        .addInput<int32_t>(dstSize, dims, 1, ACL_INT32, "size")
+        .addAttr(true, "half_pixel_centers")
+        .addOutput(dst, "y")
+        .run(stream);
+}
+
+void resize(InputArray _src, OutputArray _dst, Size dsize, double inv_scale_x, double inv_scale_y,
+            int interpolation, AscendStream& stream)
+{
+    AscendMat src = getInputMat(_src, stream);
+    Size ssize = _src.size();
+    CV_Assert(!ssize.empty());
+    float_t scaleX = (float_t)inv_scale_x;
+    float_t scaleY = (float_t)inv_scale_y;
+    CV_Assert(interpolation == INTER_CUBIC || interpolation == INTER_AREA);
+
+    if (dsize.empty())
+    {
+        CV_Assert(scaleX > 0);
+        CV_Assert(scaleY > 0);
+        dsize = Size(saturate_cast<int>(ssize.width * inv_scale_x),
+                     saturate_cast<int>(ssize.height * inv_scale_y));
+        CV_Assert(!dsize.empty());
+    }
+    else
+    {
+        scaleX = (float_t)dsize.width / ssize.width;
+        scaleY = (float_t)dsize.height / ssize.height;
+        CV_Assert(scaleX > 0);
+        CV_Assert(scaleY > 0);
+    }
+    AscendMat dst = getOutputMat(_dst, dsize.height, dsize.width, src.type(), stream);
+    int32_t dstSize[] = {dsize.width, dsize.height};
+
+    resize(src, dst, dstSize, interpolation, stream);
+    syncOutput(dst, _dst, stream);
+}
+
 } // namespace cann
 } // namespace cv
