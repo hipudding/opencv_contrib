@@ -351,7 +351,7 @@ Output matrix must be of the same depth as input one, size is specified by given
 @param src input array.
 @param rect a rect to crop a array to
 
-@sa cv::gapi::crop 
+@sa cv::gapi::crop
 */
 CV_EXPORTS_W AscendMat crop(InputArray _src, const Rect& rect,
                             AscendStream& stream = AscendStream::Null());
