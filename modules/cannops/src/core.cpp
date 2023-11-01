@@ -46,6 +46,11 @@ void merge(const AscendMat* src, size_t n, AscendMat& dst, AscendStream& stream)
         CV_Assert(src[i].rows == rows && src[i].cols == cols);
     }
 
+    int cns = 0;
+    for (size_t i = 0; i < n; i++)
+        cns += src[i].channels();
+    dst.create(src->rows, src->cols, CV_MAKE_TYPE(src->depth(), cns));
+
     OperatorRunner runner;
     runner.setOp("ConcatD");
 
@@ -57,18 +62,20 @@ void merge(const AscendMat* src, size_t n, AscendMat& dst, AscendStream& stream)
     runner.addOutput(dst, "output_data").addAttr(3, "concat_dim").run(stream);
 }
 
-void merge(const AscendMat* src, size_t n, OutputArray _dst, AscendStream& stream)
+void merge(const std::vector<AscendMat>& src, AscendMat& dst, AscendStream& stream)
 {
-    int cns = 0;
-    for (size_t i = 0; i < n; i++)
-        cns += src[i].channels();
-    AscendMat dst =
-        getOutputMat(_dst, src->rows, src->cols, CV_MAKE_TYPE(src->depth(), cns), stream);
-    merge(src, n, dst, stream);
-    syncOutput(dst, _dst, stream);
+    merge(&src[0], src.size(), dst, stream);
 }
 
-void merge(const std::vector<AscendMat>& src, OutputArray dst, AscendStream& stream)
+void merge(const AscendMat* src, size_t n, OutputArray& _dst,
+                      AscendStream& stream)
+{
+    AscendMat dst;
+    merge(src, n, dst, stream);
+    dst.download(_dst, stream);
+}
+void merge(const std::vector<AscendMat>& src, OutputArray& dst,
+                        AscendStream& stream)
 {
     merge(&src[0], src.size(), dst, stream);
 }
@@ -90,15 +97,23 @@ void split(const AscendMat& src, AscendMat* dst, AscendStream& stream)
     runner.addAttr(3, "split_dim").addAttr(cn, "num_split").run(stream);
 }
 
-void split(InputArray _src, AscendMat* dst, AscendStream& stream)
+void split(const AscendMat& src, std::vector<AscendMat>& dst, AscendStream& stream)
 {
-    AscendMat src = getInputMat(_src, stream);
-    split(src, dst, stream);
+    dst.resize(src.channels());
+    split(src, &dst[0], stream);
 }
 
-void split(InputArray _src, std::vector<AscendMat>& dst, AscendStream& stream)
+void split(const InputArray _src, AscendMat* dst, AscendStream& stream)
 {
-    AscendMat src = getInputMat(_src, stream);
+    AscendMat src;
+    src.upload(_src, stream);
+    split(src, dst, stream);
+}
+void split(const InputArray _src, std::vector<AscendMat>& dst,
+                        AscendStream& stream)
+{
+    AscendMat src;
+    src.upload(_src, stream);
     dst.resize(src.channels());
     split(_src, &dst[0], stream);
 }
@@ -113,15 +128,20 @@ void transpose(const AscendMat& src, int64_t* perm, AscendMat& dst, AscendStream
         .run(stream);
 }
 
-void transpose(InputArray _src, OutputArray _dst, AscendStream& stream)
+void transpose(const AscendMat& src, AscendMat& dst, AscendStream& stream)
 {
-    AscendMat src = getInputMat(_src, stream);
-
-    AscendMat dst = getOutputMat(_dst, src.cols, src.rows, src.type(), stream);
+    dst.create(src.cols, src.rows, src.type());
 
     int64_t perm[] = {0, 2, 1, 3};
     transpose(src, perm, dst, stream);
-    syncOutput(dst, _dst, stream);
+}
+
+void transpose(InputArray _src, OutputArray _dst, AscendStream& stream)
+{
+    AscendMat src, dst;
+    src.upload(_src, stream);
+    transpose(src, dst, stream);
+    dst.download(_dst, stream);
 }
 
 void flip(const AscendMat& src, std::vector<int32_t>& asixs, AscendMat& dst, AscendStream& stream)
@@ -135,10 +155,10 @@ void flip(const AscendMat& src, std::vector<int32_t>& asixs, AscendMat& dst, Asc
         .run(stream);
 }
 
-void flip(InputArray _src, OutputArray _dst, int flipCode, AscendStream& stream)
+void flip(const AscendMat& src, AscendMat& dst, int flipCode, AscendStream& stream)
 {
-    AscendMat src = getInputMat(_src, stream);
-    AscendMat dst = getOutputMat(_dst, src.rows, src.cols, src.type(), stream);
+    // TODO which layer function should create dst?
+    dst.create(src.rows, src.cols, src.type());
 
     std::vector<int32_t> asix;
     if (flipCode == 0)
@@ -151,38 +171,52 @@ void flip(InputArray _src, OutputArray _dst, int flipCode, AscendStream& stream)
         asix.push_back(2);
     }
     flip(src, asix, dst, stream);
-    syncOutput(dst, _dst, stream);
 }
 
-void rotate(InputArray _src, OutputArray _dst, int rotateMode, AscendStream& stream)
+void flip(const InputArray _src, OutputArray _dst, int flipCode, AscendStream& stream)
 {
-    AscendMat src = getInputMat(_src, stream), dst, tempMat;
+    AscendMat src, dst;
+    src.upload(_src, stream);
+    flip(src, dst, flipCode, stream);
+    dst.download(_dst, stream);
+}
+
+void rotate(const AscendMat& src, AscendMat& dst, int rotateMode, AscendStream& stream)
+{
+    AscendMat tempMat;
     switch (rotateMode)
     {
         case ROTATE_90_CLOCKWISE:
         {
-            dst = getOutputMat(_dst, src.cols, src.rows, src.type(), stream);
+            dst.create(src.cols, src.rows, src.type());
             transpose(src, tempMat, stream);
             flip(tempMat, dst, 1, stream);
             break;
         }
         case ROTATE_180:
         {
-            dst = getOutputMat(_dst, src.rows, src.cols, src.type(), stream);
+            dst.create(src.rows, src.cols, src.type());
             flip(src, dst, -1, stream);
             break;
         }
         case ROTATE_90_COUNTERCLOCKWISE:
         {
-            dst = getOutputMat(_dst, src.cols, src.rows, src.type(), stream);
-            transpose(_src, tempMat, stream);
+            dst.create(src.cols, src.rows, src.type());
+            transpose(src, tempMat, stream);
             flip(tempMat, dst, 0, stream);
             break;
         }
         default:
             break;
     }
-    syncOutput(dst, _dst, stream);
+}
+
+void rotate(InputArray _src, OutputArray _dst, int rotateMode, AscendStream& stream)
+{
+    AscendMat src, dst;
+    src.upload(_src, stream);
+    rotate(src, dst, rotateMode, stream);
+    dst.download(_dst, stream);
 }
 
 } // namespace cann

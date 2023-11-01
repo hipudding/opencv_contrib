@@ -16,7 +16,7 @@ static inline void checkAclError(aclError err, const char* file, const int line,
     if (ACL_SUCCESS != err)
     {
         const char* errMsg = aclGetRecentErrMsg();
-        cv::error(cv::Error::AscendApiCallError, errMsg == nullptr ? "" : errMsg, func, file, line);
+        cv::error(cv::Error::StsError, errMsg == nullptr ? "" : errMsg, func, file, line);
     }
 }
 
@@ -25,7 +25,7 @@ static inline void checkAclPtr(void* ptr, const char* file, const int line, cons
     if (nullptr == ptr)
     {
         const char* errMsg = aclGetRecentErrMsg();
-        cv::error(cv::Error::AscendApiCallError, errMsg == nullptr ? "" : errMsg, func, file, line);
+        cv::error(cv::Error::StsError, errMsg == nullptr ? "" : errMsg, func, file, line);
     }
 }
 

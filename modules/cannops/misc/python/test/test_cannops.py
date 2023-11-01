@@ -2,10 +2,12 @@
 # It is subject to the license terms in the LICENSE file found in the top-level directory
 # of this distribution and at http://opencv.org/license.html.
 
+import sys
+sys.path.append("/home/hua/code/opencv/modules/python/test") 
+
 from tests_common import NewOpenCVTests
 import cv2 as cv
 import numpy as np
-
 
 def genMask(mask, listx, listy):
     for row in range(mask.shape[0]):
@@ -106,9 +108,10 @@ class cannop_test(NewOpenCVTests):
     def test_imgproc(self):
         npMat = (np.random.random((128, 128, 3)) * 255).astype(np.uint8)
         cv.cann.setDevice(0)
-
+        
+        # TODO try pass out param, not use return value.
         self.assertTrue(np.allclose(
-            cv.cann.merge(cv.cann.split(npMat)), npMat))
+            cv.cann.merge(cv.cann.split(npMat)).download(), npMat))
 
         self.assertTrue(np.allclose(
             cv.cann.transpose(npMat), cv.transpose(npMat)))

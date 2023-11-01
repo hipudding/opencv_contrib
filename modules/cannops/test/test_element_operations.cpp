@@ -29,70 +29,137 @@ void testMatOpMat(FCV cvFunc, FCANN cannFunc, PARAMS... param)
     cv::cann::resetDevice();
 }
 
-TEST(ELEMENTWISE_OP, MAT_ADD_MAT) { testMatOpMat(cv::add, cv::cann::add, noArray(), -1); }
+TEST(ELEMENTWISE_OP, MAT_ADD_MAT)
+{
+    testMatOpMat(
+        cv::add,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           int dtype, AscendStream& stream)
+        { cv::cann::add(src1, src2, dst, mask, dtype, stream); },
+        noArray(), -1);
+}
 
-TEST(ELEMENTWISE_OP, MAT_SUB_MAT) { testMatOpMat(cv::subtract, cv::cann::subtract, noArray(), -1); }
+TEST(ELEMENTWISE_OP, MAT_SUB_MAT)
+{
+    testMatOpMat(
+        cv::subtract,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           int dtype, AscendStream& stream)
+        { cv::cann::subtract(src1, src2, dst, mask, dtype, stream); },
+        noArray(), -1);
+}
 
-TEST(ELEMENTWISE_OP, MAT_MUL_MAT) { testMatOpMat(cv::multiply, cv::cann::multiply, 1, -1); }
+TEST(ELEMENTWISE_OP, MAT_MUL_MAT)
+{
+    testMatOpMat(
+        cv::multiply,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, float scale, int dtype,
+           AscendStream& stream) { cv::cann::multiply(src1, src2, dst, scale, dtype, stream); },
+        1, -1);
+}
 
 TEST(ELEMENTWISE_OP, MAT_DIV_MAT)
 {
     testMatOpMat([](const cv::Mat& src1, const cv::Mat& src2, cv::Mat& dst, double scale, int dtype)
                  { cv::divide(src1, src2, dst, scale, dtype); },
-                 cv::cann::divide, 1, -1);
+                 [](const InputArray src1, const InputArray src2, OutputArray dst, float scale,
+                    int dtype, AscendStream& stream)
+                 { cv::cann::divide(src1, src2, dst, scale, dtype, stream); },
+                 1, -1);
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_AND_MAT)
 {
-    testMatOpMat(cv::bitwise_and, cv::cann::bitwise_and, noArray());
+    testMatOpMat(
+        cv::bitwise_and,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_and(src1, src2, dst, mask, stream); },
+        noArray());
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_OR_MAT)
 {
-    testMatOpMat(cv::bitwise_or, cv::cann::bitwise_or, noArray());
+    testMatOpMat(
+        cv::bitwise_or,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_or(src1, src2, dst, mask, stream); },
+        noArray());
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_XOR_MAT)
 {
-    testMatOpMat(cv::bitwise_xor, cv::cann::bitwise_xor, noArray());
+    testMatOpMat(
+        cv::bitwise_xor,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_xor(src1, src2, dst, mask, stream); },
+        noArray());
 }
 
 TEST(ELEMENTWISE_OP, MAT_ADD_MAT_WITH_MASK_AND_DTYPE)
 {
-    testMatOpMat(cv::add, cv::cann::add, genMask(), CV_32SC3);
+    testMatOpMat(
+        cv::add,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           int dtype, AscendStream& stream)
+        { cv::cann::add(src1, src2, dst, mask, dtype, stream); },
+        genMask(), CV_32SC3);
 }
 
 TEST(ELEMENTWISE_OP, MAT_SUB_MAT_WITH_MASK_AND_DTYPE)
 {
-    testMatOpMat(cv::subtract, cv::cann::subtract, genMask(), CV_32SC3);
+    testMatOpMat(
+        cv::subtract,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           int dtype, AscendStream& stream)
+        { cv::cann::subtract(src1, src2, dst, mask, dtype, stream); },
+        genMask(), CV_32SC3);
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_AND_MAT_WITH_MASK)
 {
-    testMatOpMat(cv::bitwise_and, cv::cann::bitwise_and, genMask());
+    testMatOpMat(
+        cv::bitwise_and,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_and(src1, src2, dst, mask, stream); },
+        genMask());
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_OR_MAT_WITH_MASK)
 {
-    testMatOpMat(cv::bitwise_or, cv::cann::bitwise_or, genMask());
+    testMatOpMat(
+        cv::bitwise_or,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_or(src1, src2, dst, mask, stream); },
+        genMask());
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_XOR_MAT_WITH_MASK)
 {
-    testMatOpMat(cv::bitwise_xor, cv::cann::bitwise_xor, genMask());
+    testMatOpMat(
+        cv::bitwise_xor,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_xor(src1, src2, dst, mask, stream); },
+        genMask());
 }
 
 float randomScale = randomNum();
 TEST(ELEMENTWISE_OP, MAT_MUL_MAT_WITH_SCALE)
 {
-    testMatOpMat(cv::multiply, cv::cann::multiply, randomScale, -1);
+    testMatOpMat(
+        cv::multiply,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, float scale, int dtype,
+           AscendStream& stream) { cv::cann::multiply(src1, src2, dst, scale, dtype, stream); },
+        randomScale, -1);
 }
 
 TEST(ELEMENTWISE_OP, MAT_DIV_MAT_WITH_SCALE)
 {
     testMatOpMat([](const cv::Mat& src1, const cv::Mat& src2, cv::Mat& dst, double scale, int dtype)
                  { cv::divide(src1, src2, dst, scale, dtype); },
-                 cv::cann::divide, randomScale, -1);
+                 [](const InputArray src1, const InputArray src2, OutputArray dst, float scale,
+                    int dtype, AscendStream& stream)
+                 { cv::cann::divide(src1, src2, dst, scale, dtype, stream); },
+                 randomScale, -1);
 }
 
 template <typename FCV, typename FCANN, typename... PARAMS>
@@ -121,75 +188,137 @@ void testMatOpScalar(FCV cvFunc, FCANN cannFunc, PARAMS... param)
     cv::cann::resetDevice();
 }
 
-TEST(ELEMENTWISE_OP, MAT_ADD_SCALAR) { testMatOpScalar(cv::add, cv::cann::add, noArray(), -1); }
+TEST(ELEMENTWISE_OP, MAT_ADD_SCALAR)
+{
+    testMatOpScalar(
+        cv::add,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           int dtype, AscendStream& stream)
+        { cv::cann::add(src1, src2, dst, mask, dtype, stream); },
+        noArray(), -1);
+}
 
 TEST(ELEMENTWISE_OP, MAT_SUB_SCALAR)
 {
-    testMatOpScalar(cv::subtract, cv::cann::subtract, noArray(), -1);
+    testMatOpScalar(
+        cv::subtract,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           int dtype, AscendStream& stream)
+        { cv::cann::subtract(src1, src2, dst, mask, dtype, stream); },
+        noArray(), -1);
 }
 
-TEST(ELEMENTWISE_OP, MAT_MUL_SCALAR) { testMatOpScalar(cv::multiply, cv::cann::multiply, 1, -1); }
+TEST(ELEMENTWISE_OP, MAT_MUL_SCALAR)
+{
+    testMatOpScalar(
+        cv::multiply,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, float scale, int dtype,
+           AscendStream& stream) { cv::cann::multiply(src1, src2, dst, scale, dtype, stream); },
+        1, -1);
+}
 
 TEST(ELEMENTWISE_OP, MAT_DIV_SCALAR)
 {
-    testMatOpScalar([](const cv::Mat& src1, const cv::Mat& src2, cv::Mat& dst, double scale,
-                       int dtype) { cv::divide(src1, src2, dst, scale, dtype); },
-                    cv::cann::divide, 1, -1);
+    testMatOpScalar(
+        [](const cv::Mat& src1, const cv::Mat& src2, cv::Mat& dst, double scale, int dtype)
+        { cv::divide(src1, src2, dst, scale, dtype); },
+        [](const InputArray src1, const InputArray src2, OutputArray dst, float scale, int dtype,
+           AscendStream& stream) { cv::cann::divide(src1, src2, dst, scale, dtype, stream); },
+        1, -1);
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_AND_SCALAR)
 {
-    testMatOpScalar(cv::bitwise_and, cv::cann::bitwise_and, noArray());
+    testMatOpScalar(
+        cv::bitwise_and,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_and(src1, src2, dst, mask, stream); },
+        noArray());
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_OR_SCALAR)
 {
-    testMatOpScalar(cv::bitwise_or, cv::cann::bitwise_or, noArray());
+    testMatOpScalar(
+        cv::bitwise_or,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_or(src1, src2, dst, mask, stream); },
+        noArray());
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_XOR_SCALAR)
 {
-    testMatOpScalar(cv::bitwise_xor, cv::cann::bitwise_xor, noArray());
+    testMatOpScalar(
+        cv::bitwise_xor,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_xor(src1, src2, dst, mask, stream); },
+        noArray());
 }
 
 TEST(ELEMENTWISE_OP, MAT_ADD_SCALAR_WITH_MASK_AND_DETYPE)
 {
-    testMatOpScalar(cv::add, cv::cann::add, genMask(), CV_32SC3);
+    testMatOpScalar(
+        cv::add,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           int dtype, AscendStream& stream)
+        { cv::cann::add(src1, src2, dst, mask, dtype, stream); },
+        genMask(), CV_32SC3);
 }
 
 TEST(ELEMENTWISE_OP, MAT_SUB_SCALAR_WITH_MASK_AND_DETYPE)
 {
-    testMatOpScalar(cv::subtract, cv::cann::subtract, genMask(), CV_32SC3);
+    testMatOpScalar(
+        cv::subtract,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           int dtype, AscendStream& stream)
+        { cv::cann::subtract(src1, src2, dst, mask, dtype, stream); },
+        genMask(), CV_32SC3);
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_AND_SCALAR_WITH_MASK)
 {
-    testMatOpScalar(cv::bitwise_and, cv::cann::bitwise_and, genMask());
+    testMatOpScalar(
+        cv::bitwise_and,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_and(src1, src2, dst, mask, stream); },
+        genMask());
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_OR_SCALAR_WITH_MASK)
 {
-    testMatOpScalar(cv::bitwise_or, cv::cann::bitwise_or, genMask());
+    testMatOpScalar(
+        cv::bitwise_or,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_or(src1, src2, dst, mask, stream); },
+        genMask());
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_XOR_SCALAR_WITH_MASK)
 {
-    testMatOpScalar(cv::bitwise_xor, cv::cann::bitwise_xor, genMask());
+    testMatOpScalar(
+        cv::bitwise_xor,
+        [](const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask,
+           AscendStream& stream) { cv::cann::bitwise_xor(src1, src2, dst, mask, stream); },
+        genMask());
 }
 
 /* I think the cv result is wrong, which has truncated middle result.*/
 /*
 TEST(ELEMENTWISE_OP, MAT_MUL_SCALAR_WITH_SCALE)
 {
-    testMatOpScalar(cv::multiply, cv::cann::multiply, randomScale, -1);
+    testMatOpScalar(cv::multiply, [](const InputArray src1, const InputArray src2, OutputArray dst,
+float scale, int dtype, AscendStream& stream) { cv::cann::multiply(src1, src2, dst, scale, dtype,
+stream); }, randomScale, -1);
 }
 */
 
 TEST(ELEMENTWISE_OP, MAT_DIV_SCALAR_WITH_SCALE)
 {
-    testMatOpScalar([](const cv::Mat& src1, const cv::Mat& src2, cv::Mat& dst, double scale,
-                       int dtype) { cv::divide(src1, src2, dst, scale, dtype); },
-                    cv::cann::divide, randomScale, -1);
+    testMatOpScalar(
+        [](const cv::Mat& src1, const cv::Mat& src2, cv::Mat& dst, double scale, int dtype)
+        { cv::divide(src1, src2, dst, scale, dtype); },
+        [](const InputArray src1, const InputArray src2, OutputArray dst, float scale, int dtype,
+           AscendStream& stream) { cv::cann::divide(src1, src2, dst, scale, dtype, stream); },
+        randomScale, -1);
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_NOT_1)
@@ -231,6 +360,7 @@ TEST(ELEMENTWISE_OP, MAT_THRESHOLD_1)
     for (int i = 0; i <= 4; i++)
     {
         cv::threshold(cpuMat, cpuOpRet, 128, 250, i);
+        // TODO find the reason empty AscendMat is not continuous.
         cv::cann::threshold(ascendMat16F, aclOpRet, 128, 250, i);
         aclOpRet.convertTo(aclOpRet16S, CV_16S);
         aclOpRet16S.download(checker);
