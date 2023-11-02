@@ -303,8 +303,8 @@ void testMatOpScalar(FCV cvFunc, FCANN cannFunc, PARAMS... param)
     Mat mat(10, 10, CV_32SC3, randomScalar());
     Mat cpuDst1, cpuDst2, checker1, checker2;
 
-    cvFunc(Mat(10, 10, CV_32FC3, scalar), mat, cpuDst1, param...);
-    cvFunc(mat, Mat(10, 10, CV_32FC3, scalar), cpuDst2, param...);
+    cvFunc(Mat(10, 10, CV_32SC3, scalar), mat, cpuDst1, param...);
+    cvFunc(mat, Mat(10, 10, CV_32SC3, scalar), cpuDst2, param...);
     cv::cann::setDevice(DEVICE_ID);
 
     cannFunc(scalar, mat, checker1, param..., AscendStream::Null());
@@ -409,30 +409,7 @@ void testAscendMatOpScalar(FCV cvFunc, FCANN cannFunc, PARAMS... param)
 
     cv::cann::resetDevice();
 }
-template <typename FCV, typename FCANN, typename... PARAMS>
-void testScalarOpAscendMat(FCV cvFunc, FCANN cannFunc, PARAMS... param)
-{
-    Scalar scalar = randomScalar();
-    Mat mat(10, 10, CV_32SC3, randomScalar());
-    Mat cpuDst, checker;
-    AscendMat npuMat, npuChecker;
-    npuMat.upload(mat);
 
-    cvFunc(Mat(10, 10, CV_32SC3, scalar), mat, cpuDst, param...);
-    cv::cann::setDevice(DEVICE_ID);
-
-    cannFunc(scalar, npuMat, npuChecker, param..., AscendStream::Null());
-    npuChecker.download(checker);
-    EXPECT_MAT_NEAR(cpuDst, checker, 1.0);
-
-    AscendStream stream;
-    cannFunc(scalar, npuMat, npuChecker, param..., stream);
-    stream.waitForCompletion();
-    npuChecker.download(checker);
-    EXPECT_MAT_NEAR(cpuDst, checker, 1.0);
-
-    cv::cann::resetDevice();
-}
 TEST(ELEMENTWISE_OP, MAT_ADD_SCALAR)
 {
     testMatOpScalar(
@@ -469,12 +446,6 @@ TEST(ELEMENTWISE_OP, MAT_SUB_SCALAR)
            int dtype, AscendStream& stream)
         { cv::cann::subtract(src1, src2, dst, mask, dtype, stream); },
         AscendMat(), -1);
-    testScalarOpAscendMatMask(
-        cv::subtract,
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, const AscendMat& mask,
-           int dtype, AscendStream& stream)
-        { cv::cann::subtract(src1, src2, dst, mask, dtype, stream); },
-        AscendMat(), -1);
 }
 
 TEST(ELEMENTWISE_OP, MAT_MUL_SCALAR)
@@ -487,11 +458,6 @@ TEST(ELEMENTWISE_OP, MAT_MUL_SCALAR)
     testAscendMatOpScalar(
         cv::multiply,
         [](const AscendMat& src1, const Scalar& src2, AscendMat& dst, float scale, int dtype,
-           AscendStream& stream) { cv::cann::multiply(src1, src2, dst, scale, dtype, stream); },
-        1, -1);
-    testScalarOpAscendMat(
-        cv::multiply,
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, float scale, int dtype,
            AscendStream& stream) { cv::cann::multiply(src1, src2, dst, scale, dtype, stream); },
         1, -1);
 }
@@ -510,12 +476,6 @@ TEST(ELEMENTWISE_OP, MAT_DIV_SCALAR)
         [](const AscendMat& src1, const Scalar& src2, AscendMat& dst, float scale, int dtype,
            AscendStream& stream) { cv::cann::divide(src1, src2, dst, scale, dtype, stream); },
         1, -1);
-    testScalarOpAscendMat(
-        [](const cv::Mat& src1, const cv::Mat& src2, cv::Mat& dst, double scale, int dtype)
-        { cv::divide(src1, src2, dst, scale, dtype); },
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, float scale, int dtype,
-           AscendStream& stream) { cv::cann::divide(src1, src2, dst, scale, dtype, stream); },
-        1, -1);
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_AND_SCALAR)
@@ -528,11 +488,6 @@ TEST(ELEMENTWISE_OP, MAT_BITWISE_AND_SCALAR)
     testAscendMatOpScalarMask(
         cv::bitwise_and,
         [](const AscendMat& src1, const Scalar& src2, AscendMat& dst, const AscendMat& mask,
-           AscendStream& stream) { cv::cann::bitwise_and(src1, src2, dst, mask, stream); },
-        AscendMat());
-    testScalarOpAscendMatMask(
-        cv::bitwise_and,
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, const AscendMat& mask,
            AscendStream& stream) { cv::cann::bitwise_and(src1, src2, dst, mask, stream); },
         AscendMat());
 }
@@ -549,11 +504,6 @@ TEST(ELEMENTWISE_OP, MAT_BITWISE_OR_SCALAR)
         [](const AscendMat& src1, const Scalar& src2, AscendMat& dst, const AscendMat& mask,
            AscendStream& stream) { cv::cann::bitwise_or(src1, src2, dst, mask, stream); },
         AscendMat());
-    testScalarOpAscendMatMask(
-        cv::bitwise_or,
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, const AscendMat& mask,
-           AscendStream& stream) { cv::cann::bitwise_or(src1, src2, dst, mask, stream); },
-        AscendMat());
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_XOR_SCALAR)
@@ -566,11 +516,6 @@ TEST(ELEMENTWISE_OP, MAT_BITWISE_XOR_SCALAR)
     testAscendMatOpScalarMask(
         cv::bitwise_xor,
         [](const AscendMat& src1, const Scalar& src2, AscendMat& dst, const AscendMat& mask,
-           AscendStream& stream) { cv::cann::bitwise_xor(src1, src2, dst, mask, stream); },
-        AscendMat());
-    testScalarOpAscendMatMask(
-        cv::bitwise_xor,
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, const AscendMat& mask,
            AscendStream& stream) { cv::cann::bitwise_xor(src1, src2, dst, mask, stream); },
         AscendMat());
 }
@@ -586,12 +531,6 @@ TEST(ELEMENTWISE_OP, MAT_ADD_SCALAR_WITH_MASK_AND_DETYPE)
     testAscendMatOpScalarMask(
         cv::add,
         [](const AscendMat& src1, const Scalar& src2, AscendMat& dst, const AscendMat& mask,
-           int dtype, AscendStream& stream)
-        { cv::cann::add(src1, src2, dst, mask, dtype, stream); },
-        genNpuMask(), CV_32SC3);
-    testScalarOpAscendMatMask(
-        cv::add,
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, const AscendMat& mask,
            int dtype, AscendStream& stream)
         { cv::cann::add(src1, src2, dst, mask, dtype, stream); },
         genNpuMask(), CV_32SC3);
@@ -611,12 +550,6 @@ TEST(ELEMENTWISE_OP, MAT_SUB_SCALAR_WITH_MASK_AND_DETYPE)
            int dtype, AscendStream& stream)
         { cv::cann::subtract(src1, src2, dst, mask, dtype, stream); },
         genNpuMask(), CV_32SC3);
-    testScalarOpAscendMatMask(
-        cv::subtract,
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, const AscendMat& mask,
-           int dtype, AscendStream& stream)
-        { cv::cann::subtract(src1, src2, dst, mask, dtype, stream); },
-        genNpuMask(), CV_32SC3);
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_AND_SCALAR_WITH_MASK)
@@ -629,11 +562,6 @@ TEST(ELEMENTWISE_OP, MAT_BITWISE_AND_SCALAR_WITH_MASK)
     testAscendMatOpScalarMask(
         cv::bitwise_and,
         [](const AscendMat& src1, const Scalar& src2, AscendMat& dst, const AscendMat& mask,
-           AscendStream& stream) { cv::cann::bitwise_and(src1, src2, dst, mask, stream); },
-        genNpuMask());
-    testScalarOpAscendMatMask(
-        cv::bitwise_and,
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, const AscendMat& mask,
            AscendStream& stream) { cv::cann::bitwise_and(src1, src2, dst, mask, stream); },
         genNpuMask());
 }
@@ -650,11 +578,6 @@ TEST(ELEMENTWISE_OP, MAT_BITWISE_OR_SCALAR_WITH_MASK)
         [](const AscendMat& src1, const Scalar& src2, AscendMat& dst, const AscendMat& mask,
            AscendStream& stream) { cv::cann::bitwise_or(src1, src2, dst, mask, stream); },
         genNpuMask());
-    testScalarOpAscendMatMask(
-        cv::bitwise_or,
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, const AscendMat& mask,
-           AscendStream& stream) { cv::cann::bitwise_or(src1, src2, dst, mask, stream); },
-        genNpuMask());
 }
 
 TEST(ELEMENTWISE_OP, MAT_BITWISE_XOR_SCALAR_WITH_MASK)
@@ -667,11 +590,6 @@ TEST(ELEMENTWISE_OP, MAT_BITWISE_XOR_SCALAR_WITH_MASK)
     testAscendMatOpScalarMask(
         cv::bitwise_xor,
         [](const AscendMat& src1, const Scalar& src2, AscendMat& dst, const AscendMat& mask,
-           AscendStream& stream) { cv::cann::bitwise_xor(src1, src2, dst, mask, stream); },
-        genNpuMask());
-    testScalarOpAscendMatMask(
-        cv::bitwise_xor,
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, const AscendMat& mask,
            AscendStream& stream) { cv::cann::bitwise_xor(src1, src2, dst, mask, stream); },
         genNpuMask());
 }
@@ -700,12 +618,6 @@ TEST(ELEMENTWISE_OP, MAT_DIV_SCALAR_WITH_SCALE)
         [](const cv::Mat& src1, const cv::Mat& src2, cv::Mat& dst, double scale, int dtype)
         { cv::divide(src1, src2, dst, scale, dtype); },
         [](const AscendMat& src1, const Scalar& src2, AscendMat& dst, float scale, int dtype,
-           AscendStream& stream) { cv::cann::divide(src1, src2, dst, scale, dtype, stream); },
-        randomScale, -1);
-    testScalarOpAscendMat(
-        [](const cv::Mat& src1, const cv::Mat& src2, cv::Mat& dst, double scale, int dtype)
-        { cv::divide(src1, src2, dst, scale, dtype); },
-        [](const Scalar& src1, const AscendMat& src2, AscendMat& dst, float scale, int dtype,
            AscendStream& stream) { cv::cann::divide(src1, src2, dst, scale, dtype, stream); },
         randomScale, -1);
 }

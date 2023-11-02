@@ -216,6 +216,19 @@ void rotate(InputArray _src, OutputArray _dst, int rotateMode, AscendStream& str
     dst.download(_dst, stream);
 }
 
+void crop(const AscendMat& src, AscendMat& dst, const AscendMat& sizeSrcNpu, int64_t* offset,
+          AscendStream& stream)
+{
+    OperatorRunner runner;
+    runner.setOp("Crop")
+        .addInput(src, "x")
+        .addInput(sizeSrcNpu, "size")
+        .addAttr(1, "axis")
+        .addAttr(offset, 3, "offsets")
+        .addOutput(dst, "y")
+        .run(stream);
+}
+
 AscendMat crop(const AscendMat& src, const Rect& rect, AscendStream& stream)
 {
     AscendMat dst, sizeSrcNpu;
@@ -229,15 +242,8 @@ AscendMat crop(const AscendMat& src, const Rect& rect, AscendStream& stream)
 
     Mat sizeSrc(height, width, src.type(), size1);
     sizeSrcNpu.upload(sizeSrc);
+    crop(src, dst, sizeSrcNpu, offset, stream);
 
-    OperatorRunner runner;
-    runner.setOp("Crop")
-        .addInput(src, "x")
-        .addInput(sizeSrcNpu, "size")
-        .addAttr(1, "axis")
-        .addAttr(offset, 3, "offsets")
-        .addOutput(dst, "y")
-        .run(stream);
     return dst;
 }
 AscendMat crop(InputArray _src, const Rect& rect, AscendStream& stream)
@@ -245,6 +251,32 @@ AscendMat crop(InputArray _src, const Rect& rect, AscendStream& stream)
     AscendMat src;
     src.upload(_src, stream);
     return crop(src, rect, stream);
+}
+
+void resize(const AscendMat& src, AscendMat& dst, int32_t* dstSize, int interpolation,
+            AscendStream& stream)
+{
+    OperatorRunner runner;
+    int64_t dims[] = {2};
+    char const* mode;
+    switch (interpolation)
+    {
+        case INTER_CUBIC:
+            mode = "ResizeBicubic";
+            break;
+        case INTER_AREA:
+            mode = "ResizeArea";
+            break;
+        default:
+            break;
+    }
+
+    runner.setOp(mode)
+        .addInput(src, "images")
+        .addInput<int32_t>(dstSize, dims, 1, ACL_INT32, "size")
+        .addAttr(true, "half_pixel_centers")
+        .addOutput(dst, "y")
+        .run(stream);
 }
 
 void resize(const AscendMat& src, AscendMat& dst, Size dsize, double inv_scale_x,
@@ -274,28 +306,7 @@ void resize(const AscendMat& src, AscendMat& dst, Size dsize, double inv_scale_x
 
     int32_t dstSize[] = {dsize.width, dsize.height};
     dst.create(dstSize[0], dstSize[1], src.type());
-
-    OperatorRunner runner;
-    int64_t dims[] = {2};
-    char const* mode;
-    switch (interpolation)
-    {
-        case INTER_CUBIC:
-            mode = "ResizeBicubic";
-            break;
-        case INTER_AREA:
-            mode = "ResizeArea";
-            break;
-        default:
-            break;
-    }
-
-    runner.setOp(mode)
-        .addInput(src, "images")
-        .addInput<int32_t>(dstSize, dims, 1, ACL_INT32, "size")
-        .addAttr(true, "half_pixel_centers")
-        .addOutput(dst, "y")
-        .run(stream);
+    resize(src, dst, dstSize, interpolation, stream);
 }
 
 void resize(InputArray _src, OutputArray _dst, Size dsize, double inv_scale_x, double inv_scale_y,
