@@ -67,15 +67,13 @@ void merge(const std::vector<AscendMat>& src, AscendMat& dst, AscendStream& stre
     merge(&src[0], src.size(), dst, stream);
 }
 
-void merge(const AscendMat* src, size_t n, OutputArray& _dst,
-                      AscendStream& stream)
+void merge(const AscendMat* src, size_t n, OutputArray& _dst, AscendStream& stream)
 {
     AscendMat dst;
     merge(src, n, dst, stream);
     dst.download(_dst, stream);
 }
-void merge(const std::vector<AscendMat>& src, OutputArray& dst,
-                        AscendStream& stream)
+void merge(const std::vector<AscendMat>& src, OutputArray& dst, AscendStream& stream)
 {
     merge(&src[0], src.size(), dst, stream);
 }
@@ -109,8 +107,7 @@ void split(const InputArray _src, AscendMat* dst, AscendStream& stream)
     src.upload(_src, stream);
     split(src, dst, stream);
 }
-void split(const InputArray _src, std::vector<AscendMat>& dst,
-                        AscendStream& stream)
+void split(const InputArray _src, std::vector<AscendMat>& dst, AscendStream& stream)
 {
     AscendMat src;
     src.upload(_src, stream);
@@ -216,6 +213,97 @@ void rotate(InputArray _src, OutputArray _dst, int rotateMode, AscendStream& str
     AscendMat src, dst;
     src.upload(_src, stream);
     rotate(src, dst, rotateMode, stream);
+    dst.download(_dst, stream);
+}
+
+AscendMat crop(const AscendMat& src, const Rect& rect, AscendStream& stream)
+{
+    AscendMat dst, sizeSrcNpu;
+    // left-up conner
+    int x = rect.x, y = rect.y, width = rect.width, height = rect.height;
+    int64_t offset[] = {y, x, 0};
+
+    CV_Assert(x + width <= src.cols && y + height <= src.rows);
+    int16_t size1[] = {1, src.channels(), height, width};
+    dst.create(height, width, src.type());
+
+    Mat sizeSrc(height, width, src.type(), size1);
+    sizeSrcNpu.upload(sizeSrc);
+
+    OperatorRunner runner;
+    runner.setOp("Crop")
+        .addInput(src, "x")
+        .addInput(sizeSrcNpu, "size")
+        .addAttr(1, "axis")
+        .addAttr(offset, 3, "offsets")
+        .addOutput(dst, "y")
+        .run(stream);
+    return dst;
+}
+AscendMat crop(InputArray _src, const Rect& rect, AscendStream& stream)
+{
+    AscendMat src;
+    src.upload(_src, stream);
+    return crop(src, rect, stream);
+}
+
+void resize(const AscendMat& src, AscendMat& dst, Size dsize, double inv_scale_x,
+            double inv_scale_y, int interpolation, AscendStream& stream)
+{
+    Size ssize = src.size();
+    CV_Assert(!ssize.empty());
+    float_t scaleX = (float_t)inv_scale_x;
+    float_t scaleY = (float_t)inv_scale_y;
+    CV_Assert(interpolation == INTER_CUBIC || interpolation == INTER_AREA);
+
+    if (dsize.empty())
+    {
+        CV_Assert(scaleX > 0);
+        CV_Assert(scaleY > 0);
+        dsize = Size(saturate_cast<int>(ssize.width * inv_scale_x),
+                     saturate_cast<int>(ssize.height * inv_scale_y));
+        CV_Assert(!dsize.empty());
+    }
+    else
+    {
+        scaleX = (float_t)dsize.width / ssize.width;
+        scaleY = (float_t)dsize.height / ssize.height;
+        CV_Assert(scaleX > 0);
+        CV_Assert(scaleY > 0);
+    }
+
+    int32_t dstSize[] = {dsize.width, dsize.height};
+    dst.create(dstSize[0], dstSize[1], src.type());
+
+    OperatorRunner runner;
+    int64_t dims[] = {2};
+    char const* mode;
+    switch (interpolation)
+    {
+        case INTER_CUBIC:
+            mode = "ResizeBicubic";
+            break;
+        case INTER_AREA:
+            mode = "ResizeArea";
+            break;
+        default:
+            break;
+    }
+
+    runner.setOp(mode)
+        .addInput(src, "images")
+        .addInput<int32_t>(dstSize, dims, 1, ACL_INT32, "size")
+        .addAttr(true, "half_pixel_centers")
+        .addOutput(dst, "y")
+        .run(stream);
+}
+
+void resize(InputArray _src, OutputArray _dst, Size dsize, double inv_scale_x, double inv_scale_y,
+            int interpolation, AscendStream& stream)
+{
+    AscendMat src, dst;
+    src.upload(_src, stream);
+    resize(src, dst, dsize, inv_scale_x, inv_scale_y, interpolation, stream);
     dst.download(_dst, stream);
 }
 
