@@ -392,7 +392,7 @@ CV_EXPORTS_W void split(const InputArray src, CV_OUT std::vector<AscendMat>& dst
 CV_EXPORTS_W void transpose(InputArray src, OutputArray dst,
                             AscendStream& stream = AscendStream::Null());
 /** @overload */
-CV_EXPORTS_W void transpose(const AscendMat& src, AscendMat& dst,
+CV_EXPORTS_W void transpose(const AscendMat& src, CV_OUT AscendMat& dst,
                             AscendStream& stream = AscendStream::Null());
 /** @brief Flips a 2D matrix around vertical, horizontal, or both axes.
 
@@ -409,7 +409,7 @@ CV_EXPORTS_W void transpose(const AscendMat& src, AscendMat& dst,
 CV_EXPORTS_W void flip(InputArray src, OutputArray dst, int flipCode,
                        AscendStream& stream = AscendStream::Null());
 /** @overload */
-CV_EXPORTS_W void flip(const AscendMat& src, AscendMat& dst, int flipCode,
+CV_EXPORTS_W void flip(const AscendMat& src, CV_OUT AscendMat& dst, int flipCode,
                        AscendStream& stream = AscendStream::Null());
 /** @brief Rotates a 2D array in multiples of 90 degrees.
 The function cv::rotate rotates the array in one of three different ways:
@@ -427,7 +427,7 @@ and the rows and cols are switched for ROTATE_90_CLOCKWISE and ROTATE_90_COUNTER
 CV_EXPORTS_W void rotate(InputArray src, OutputArray dst, int rotateCode,
                          AscendStream& stream = AscendStream::Null());
 /** @overload */
-CV_EXPORTS_W void rotate(const AscendMat& src, AscendMat& dst, int rotateMode,
+CV_EXPORTS_W void rotate(const AscendMat& src, CV_OUT AscendMat& dst, int rotateMode,
                          AscendStream& stream = AscendStream::Null());
 
 /** @brief crop a 2D array.
@@ -481,7 +481,7 @@ CV_EXPORTS_W void resize(InputArray _src, OutputArray _dst, Size dsize, double i
                          double inv_scale_y, int interpolation,
                          AscendStream& stream = AscendStream::Null());
 /** @overload */
-CV_EXPORTS_W void resize(const AscendMat& src, AscendMat& dst, Size dsize, double inv_scale_x,
+CV_EXPORTS_W void resize(const AscendMat& src, CV_OUT AscendMat& dst, Size dsize, double inv_scale_x,
                          double inv_scale_y, int interpolation,
                          AscendStream& stream = AscendStream::Null());
 //! @} cannops_core
