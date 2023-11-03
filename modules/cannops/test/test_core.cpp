@@ -121,6 +121,7 @@ TEST(CORE, FLIP)
         cv::cann::flip(cpuMat, checker, flipMode);
         EXPECT_MAT_NEAR(cpuRetMat, checker, 0.0);
     }
+
     AscendMat npuMat, npuChecker;
     npuMat.upload(cpuMat);
     for (flipMode = -1; flipMode < 2; flipMode++)
@@ -143,6 +144,7 @@ TEST(CORE, ROTATE)
         cv::cann::rotate(cpuMat, checker, rotateMode);
         EXPECT_MAT_NEAR(cpuRetMat, checker, 0.0);
     }
+    
     AscendMat npuMat, npuChecker;
     npuMat.upload(cpuMat);
     for (rotateMode = 0; rotateMode < 3; rotateMode++)

@@ -8,16 +8,7 @@ namespace cv
 {
 namespace cann
 {
-static inline aclFormat getAclFormat(const char* type)
-{
-    if (strcmp(type, "NCHW") == 0)
-        return ACL_FORMAT_NCHW;
-    else if (strcmp(type, "NHWC") == 0)
-        return ACL_FORMAT_NHWC;
-    else
-        CV_Error(Error::StsBadArg, "Unknown/unsupported matrix format");
-}
-
+// Transform data type from one to another. eg. from NCHW to NHWC.
 void transData(const AscendMat& src, AscendMat& dst, const char* from, const char* to,
                AscendStream& stream)
 {
@@ -39,7 +30,7 @@ void merge(const AscendMat* src, size_t n, AscendMat& dst, AscendStream& stream)
     int rows = src->rows;
     int cols = src->cols;
 
-    // all matrix must have same size and type
+    // All matrix must have same size and type
     for (size_t i = 1; i < n; i++)
     {
         CV_Assert(src[i].depth() == depth && src[i].channels() == 1);
@@ -127,9 +118,8 @@ void transpose(const AscendMat& src, int64_t* perm, AscendMat& dst, AscendStream
 
 void transpose(const AscendMat& src, AscendMat& dst, AscendStream& stream)
 {
-    dst.create(src.cols, src.rows, src.type());
-
     int64_t perm[] = {0, 2, 1, 3};
+    dst.create(src.cols, src.rows, src.type());
     transpose(src, perm, dst, stream);
 }
 
@@ -154,9 +144,6 @@ void flip(const AscendMat& src, std::vector<int32_t>& asixs, AscendMat& dst, Asc
 
 void flip(const AscendMat& src, AscendMat& dst, int flipCode, AscendStream& stream)
 {
-    // TODO which layer function should create dst?
-    dst.create(src.rows, src.cols, src.type());
-
     std::vector<int32_t> asix;
     if (flipCode == 0)
         asix.push_back(1);
@@ -167,6 +154,7 @@ void flip(const AscendMat& src, AscendMat& dst, int flipCode, AscendStream& stre
         asix.push_back(1);
         asix.push_back(2);
     }
+    dst.create(src.rows, src.cols, src.type());
     flip(src, asix, dst, stream);
 }
 
@@ -237,7 +225,7 @@ AscendMat crop(const AscendMat& src, const Rect& rect, AscendStream& stream)
     int64_t offset[] = {y, x, 0};
 
     CV_Assert(x + width <= src.cols && y + height <= src.rows);
-    int16_t size1[] = {1, src.channels(), height, width};
+    int size1[] = {1, src.channels(), height, width};
     dst.create(height, width, src.type());
 
     Mat sizeSrc(height, width, src.type(), size1);

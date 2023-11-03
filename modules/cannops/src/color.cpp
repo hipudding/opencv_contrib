@@ -8,6 +8,8 @@ namespace cv
 {
 namespace cann
 {
+// Integer type images will have a loss of accuracy during calculation, so they must be converted to
+// float before calculation.
 static AscendMat convertTo(const AscendMat& src, int dtype, AscendStream& stream)
 {
     AscendMat ret;
@@ -24,6 +26,7 @@ static void convertBack(const AscendMat& src, AscendMat& dst, AscendStream& stre
         src.convertTo(dst, stream);
 }
 
+//! Set alpha channel to a Mat.
 static void matAlphaSet(AscendMat& mat, int dtype, AscendStream& stream)
 {
     if (dtype < 0)
@@ -50,7 +53,6 @@ inline void checkImg(const AscendMat& mat)
     CV_Assert(depth == CV_8U || depth == CV_16U || depth == CV_32F);
 }
 
-// check all refrence parameter
 inline void cvtBGRtoBGR(const AscendMat& src, AscendMat& dst, int dcn, bool swapBlue,
                         AscendStream& stream)
 {
@@ -149,7 +151,8 @@ inline void cvtGraytoBGR(const AscendMat& src, AscendMat& dst, int dcn, bool, As
     merge(matChannels, dcn, dst, stream);
 }
 
-inline void cvtGraytoBGR(const InputArray& _src, OutputArray& _dst, int dcn, bool, AscendStream& stream)
+inline void cvtGraytoBGR(const InputArray& _src, OutputArray& _dst, int dcn, bool,
+                         AscendStream& stream)
 {
     AscendMat src, dst;
     src.upload(_src, stream);
@@ -193,8 +196,9 @@ inline void matMulRGB(const AscendMat& src, AscendMat& dst, float* matrix, Ascen
     convertBack(formatedDst, dst, stream);
 }
 
-// TODO should deal with overflow. set 255 instead of cut off.
-inline void cvtBGRtoXYZ(const AscendMat& src, AscendMat& dst, int, bool swapBlue, AscendStream& stream)
+// TODO: should deal with overflow. set 255 instead of cut off.
+inline void cvtBGRtoXYZ(const AscendMat& src, AscendMat& dst, int, bool swapBlue,
+                        AscendStream& stream)
 {
     float coeffs[9];
     memcpy(coeffs, RGB2XYZ_D65, 9 * sizeof(float));
@@ -207,7 +211,8 @@ inline void cvtBGRtoXYZ(const AscendMat& src, AscendMat& dst, int, bool swapBlue
     matMulRGB(src, dst, coeffs, stream);
 }
 
-inline void cvtBGRtoXYZ(const InputArray& _src, OutputArray& _dst, int, bool swapBlue, AscendStream& stream)
+inline void cvtBGRtoXYZ(const InputArray& _src, OutputArray& _dst, int, bool swapBlue,
+                        AscendStream& stream)
 {
     AscendMat src, dst;
     src.upload(_src, stream);
@@ -385,92 +390,93 @@ inline void cvtYCrCbtoBGR(const InputArray& _src, OutputArray& _dst, int dcn, fl
     dst.download(_dst, stream);
 }
 
+// The input may be Input/OutputArray or AscendMat. Use templates to reduce duplicate code.
 template <typename SRC, typename DST>
-inline void BGR2BGRA(SRC& src, DST& dst, int, AscendStream& stream)
+inline void BGR2BGRA(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoBGR(src, dst, 4, false, stream);
 }
 
 template <typename SRC, typename DST>
-inline void BGRA2BGR(SRC& src, DST& dst, int, AscendStream& stream)
+inline void BGRA2BGR(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoBGR(src, dst, 3, false, stream);
 }
 
 template <typename SRC, typename DST>
-inline void BGR2RGBA(SRC& src, DST& dst, int, AscendStream& stream)
+inline void BGR2RGBA(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoBGR(src, dst, 4, true, stream);
 }
 
 template <typename SRC, typename DST>
-inline void RGBA2BGR(SRC& src, DST& dst, int, AscendStream& stream)
+inline void RGBA2BGR(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoBGR(src, dst, 3, true, stream);
 }
 
 template <typename SRC, typename DST>
-inline void BGR2RGB(SRC& src, DST& dst, int, AscendStream& stream)
+inline void BGR2RGB(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoBGR(src, dst, 3, true, stream);
 }
 
 template <typename SRC, typename DST>
-inline void BGRA2RGBA(SRC& src, DST& dst, int, AscendStream& stream)
+inline void BGRA2RGBA(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoBGR(src, dst, 4, true, stream);
 }
 
 template <typename SRC, typename DST>
-inline void BGR2GRAY(SRC& src, DST& dst, int, AscendStream& stream)
+inline void BGR2GRAY(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoGray(src, dst, 1, false, stream);
 }
 
 template <typename SRC, typename DST>
-inline void RGB2GRAY(SRC& src, DST& dst, int, AscendStream& stream)
+inline void RGB2GRAY(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoGray(src, dst, 1, true, stream);
 }
 
 template <typename SRC, typename DST>
-inline void GRAY2BGR(SRC& src, DST& dst, int, AscendStream& stream)
+inline void GRAY2BGR(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtGraytoBGR(src, dst, 3, false, stream);
 }
 
 template <typename SRC, typename DST>
-inline void GRAY2BGRA(SRC& src, DST& dst, int, AscendStream& stream)
+inline void GRAY2BGRA(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtGraytoBGR(src, dst, 4, false, stream);
 }
 
 template <typename SRC, typename DST>
-inline void BGRA2GRAY(SRC& src, DST& dst, int, AscendStream& stream)
+inline void BGRA2GRAY(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoGray(src, dst, 1, false, stream);
 }
 
 template <typename SRC, typename DST>
-inline void RGBA2GRAY(SRC& src, DST& dst, int, AscendStream& stream)
+inline void RGBA2GRAY(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoGray(src, dst, 1, true, stream);
 }
 
 template <typename SRC, typename DST>
-inline void BGR2XYZ(SRC& src, DST& dst, int, AscendStream& stream)
+inline void BGR2XYZ(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoXYZ(src, dst, 3, false, stream);
 }
 
 template <typename SRC, typename DST>
-inline void RGB2XYZ(SRC& src, DST& dst, int, AscendStream& stream)
+inline void RGB2XYZ(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     cvtBGRtoXYZ(src, dst, 3, true, stream);
 }
 
 template <typename SRC, typename DST>
-inline void XYZ2BGR(SRC& src, DST& dst, int dcn, AscendStream& stream)
+inline void XYZ2BGR(const SRC& src, DST& dst, int dcn, AscendStream& stream)
 {
     if (dcn <= 0)
         dcn = 3;
@@ -478,7 +484,7 @@ inline void XYZ2BGR(SRC& src, DST& dst, int dcn, AscendStream& stream)
 }
 
 template <typename SRC, typename DST>
-inline void XYZ2RGB(SRC& src, DST& dst, int dcn, AscendStream& stream)
+inline void XYZ2RGB(const SRC& src, DST& dst, int dcn, AscendStream& stream)
 {
     if (dcn <= 0)
         dcn = 3;
@@ -486,7 +492,7 @@ inline void XYZ2RGB(SRC& src, DST& dst, int dcn, AscendStream& stream)
 }
 
 template <typename SRC, typename DST>
-inline void BGR2YCrCb(SRC& src, DST& dst, int, AscendStream& stream)
+inline void BGR2YCrCb(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     float coeffs[2];
     coeffs[0] = YCRF;
@@ -495,7 +501,7 @@ inline void BGR2YCrCb(SRC& src, DST& dst, int, AscendStream& stream)
 }
 
 template <typename SRC, typename DST>
-inline void RGB2YCrCb(SRC& src, DST& dst, int, AscendStream& stream)
+inline void RGB2YCrCb(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     float coeffs[2];
     coeffs[0] = YCRF;
@@ -504,7 +510,7 @@ inline void RGB2YCrCb(SRC& src, DST& dst, int, AscendStream& stream)
 }
 
 template <typename SRC, typename DST>
-inline void YCrCb2BGR(SRC& src, DST& dst, int dcn, AscendStream& stream)
+inline void YCrCb2BGR(const SRC& src, DST& dst, int dcn, AscendStream& stream)
 {
     float coeffs[4];
     coeffs[0] = CR2RF;
@@ -517,7 +523,7 @@ inline void YCrCb2BGR(SRC& src, DST& dst, int dcn, AscendStream& stream)
 }
 
 template <typename SRC, typename DST>
-inline void YCrCb2RGB(SRC& src, DST& dst, int dcn, AscendStream& stream)
+inline void YCrCb2RGB(const SRC& src, DST& dst, int dcn, AscendStream& stream)
 {
     float coeffs[4];
     coeffs[0] = CR2RF;
@@ -530,7 +536,7 @@ inline void YCrCb2RGB(SRC& src, DST& dst, int dcn, AscendStream& stream)
 }
 
 template <typename SRC, typename DST>
-inline void BGR2YUV(SRC& src, DST& dst, int, AscendStream& stream)
+inline void BGR2YUV(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     float coeffs[2];
     coeffs[0] = R2VF;
@@ -539,7 +545,7 @@ inline void BGR2YUV(SRC& src, DST& dst, int, AscendStream& stream)
 }
 
 template <typename SRC, typename DST>
-inline void RGB2YUV(SRC& src, DST& dst, int, AscendStream& stream)
+inline void RGB2YUV(const SRC& src, DST& dst, int, AscendStream& stream)
 {
     float coeffs[2];
     coeffs[0] = R2VF;
@@ -548,7 +554,7 @@ inline void RGB2YUV(SRC& src, DST& dst, int, AscendStream& stream)
 }
 
 template <typename SRC, typename DST>
-inline void YUV2BGR(SRC& src, DST& dst, int dcn, AscendStream& stream)
+inline void YUV2BGR(const SRC& src, DST& dst, int dcn, AscendStream& stream)
 {
     float coeffs[4];
     coeffs[0] = V2RF;
@@ -561,7 +567,7 @@ inline void YUV2BGR(SRC& src, DST& dst, int dcn, AscendStream& stream)
 }
 
 template <typename SRC, typename DST>
-inline void YUV2RGB(SRC& src, DST& dst, int dcn, AscendStream& stream)
+inline void YUV2RGB(const SRC& src, DST& dst, int dcn, AscendStream& stream)
 {
     float coeffs[4];
     coeffs[0] = V2RF;
@@ -574,9 +580,9 @@ inline void YUV2RGB(SRC& src, DST& dst, int dcn, AscendStream& stream)
 }
 
 template <typename SRC, typename DST>
-void cvtColorDo(SRC src, DST dst, int code, int dcn, AscendStream& stream)
+void cvtColorDo(const SRC& src, DST& dst, int code, int dcn, AscendStream& stream)
 {
-    typedef void (*func_t)(SRC& src, DST& dst, int dcn, AscendStream& stream);
+    typedef void (*func_t)(const SRC& src, DST& dst, int dcn, AscendStream& stream);
     static const func_t funcs[] = {
         BGR2BGRA,  // CV_BGR2BGRA    =0
         BGRA2BGR,  // CV_BGRA2BGR    =1
@@ -756,6 +762,7 @@ void cvtColorDo(SRC src, DST dst, int code, int dcn, AscendStream& stream)
     func(src, dst, dcn, stream);
 }
 
+// Instantiate templates to avoid confusion in python code generation
 void cvtColor(const InputArray src, OutputArray dst, int code, int dcn, AscendStream& stream)
 {
     cvtColorDo(src, dst, code, dcn, stream);

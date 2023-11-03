@@ -52,6 +52,9 @@ CV_EXPORTS_W void add(const Scalar& src1, const InputArray src2, OutputArray dst
                       const InputArray mask = noArray(), int dtype = -1,
                       AscendStream& stream = AscendStream::Null());
 #endif
+// More overload functions. In order to decouple from the main opencv repository and simplify
+// user calling methods, besides the traditional Input/OutputArray parameters, some
+// overloaded functions for the AcendMat parameter is also provided.
 /** @overload */
 CV_EXPORTS_W void add(const AscendMat& src1, const AscendMat& src2, CV_OUT AscendMat& dst,
                       const AscendMat& mask = AscendMat(), int dtype = -1,
@@ -346,7 +349,7 @@ CV_EXPORTS_W double threshold(const AscendMat& src, CV_OUT AscendMat& dst, doubl
 
 @sa cv::merge cv::cuda::merge
  */
-CV_EXPORTS void merge(const AscendMat* src, size_t n, CV_OUT AscendMat& dst,
+CV_EXPORTS_W void merge(const AscendMat* src, size_t n, CV_OUT AscendMat& dst,
                       AscendStream& stream = AscendStream::Null());
 /** @overload */
 CV_EXPORTS_W void merge(const std::vector<AscendMat>& src, CV_OUT AscendMat& dst,
@@ -366,7 +369,7 @@ CV_EXPORTS_W void merge(const std::vector<AscendMat>& src, OutputArray& dst,
 
 @sa cv::split cv::cuda::split
  */
-CV_EXPORTS void split(const AscendMat& src, AscendMat* dst,
+CV_EXPORTS_W void split(const AscendMat& src, AscendMat* dst,
                       AscendStream& stream = AscendStream::Null());
 /** @overload */
 CV_EXPORTS_W void split(const AscendMat& src, CV_OUT std::vector<AscendMat>& dst,
@@ -477,8 +480,10 @@ enum InterpolationFlags
 CV_EXPORTS_W void resize(InputArray _src, OutputArray _dst, Size dsize, double inv_scale_x,
                          double inv_scale_y, int interpolation,
                          AscendStream& stream = AscendStream::Null());
+/** @overload */
 CV_EXPORTS_W void resize(const AscendMat& src, AscendMat& dst, Size dsize, double inv_scale_x,
-            double inv_scale_y, int interpolation, AscendStream& stream = AscendStream::Null());
+                         double inv_scale_y, int interpolation,
+                         AscendStream& stream = AscendStream::Null());
 //! @} cannops_core
 
 //! @addtogroup cannimgproc

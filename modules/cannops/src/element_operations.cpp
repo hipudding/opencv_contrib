@@ -81,6 +81,8 @@ void arithm_op(const AscendMat& src, float scalar, AscendMat& dst, const char* o
     runner.setOp(op).addInput(src, "x").addAttr(scalar, "value").addOutput(dst, "y").run(stream);
 }
 
+// Helper function for template arithm_op. all function called in template arithm_op should be
+// done in both AscendMat and Scalar.
 static void getInputInfo(const AscendMat& src, int& depth, int& cn, Size& size)
 {
     depth = src.depth();
@@ -134,8 +136,7 @@ static void arithm_op(const T1& src1, const T2& src2, AscendMat& dst, const Asce
 
     dst.create(size.height, size.width, CV_MAKE_TYPE(ddepth, cn));
 
-    // In order to achieve high accuracy, convert integers to floating point numbers for
-    // calculation.
+    // In order to achieve high accuracy, convert integers to float for calculation.
     if (scale != 1 && dtype < CV_32F)
     {
         convert(src1, castedSrc1, stream);
@@ -211,6 +212,7 @@ static void arithm_op(const InputArray _src1, const InputArray _src2, OutputArra
     dst.download(_dst, stream);
 }
 
+// In order to supply more interfaces, differnet function declaration shoule be done.
 void add(const InputArray src1, const InputArray src2, OutputArray dst, const InputArray mask, int dtype,
          AscendStream& stream)
 {
@@ -396,7 +398,7 @@ void bitwise_not(const AscendMat& src, AscendMat& dst, const AscendMat& mask, As
     arithm_op(src, AscendMat(), dst, mask, 1, -1, "Invert", stream);
 }
 
-// TODO check all const parameter.
+
 void addWeighted(const AscendMat& src1, double alpha, const AscendMat& src2, double beta, double gamma,
                  AscendMat& dst, int dtype, AscendStream& stream)
 {
@@ -409,7 +411,7 @@ void addWeighted(const AscendMat& src1, double alpha, const AscendMat& src2, dou
     int type = CV_MAKE_TYPE(dtype, src1.channels());
     dst.create(src1.rows, src1.cols, type);
 
-    // TODO Consider overflow, should extend type or not?
+    // TODO: Consider overflow, should extend type or not?
     AscendMat src1Weighted(src1.size(), type), src2Weighted(src1.size(), type),
         srcWeightedSumRet(src1.size(), type);
 

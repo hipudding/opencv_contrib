@@ -44,7 +44,7 @@ void aclrtMallocWarpper(void** data, size_t size)
 }
 
 void aclrtFreeWarpper(void* data) { CV_ACL_SAFE_CALL(aclrtFree(data)); }
-// TODO should define dstMax?
+
 void aclrtMemcpyWarpper(std::shared_ptr<uchar>& dst, size_t offset, const void* src, size_t size,
                         AscendStream& stream)
 {
