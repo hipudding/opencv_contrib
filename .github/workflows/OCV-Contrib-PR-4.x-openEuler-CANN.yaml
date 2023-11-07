@@ -6,6 +6,8 @@ on:
       - 4.x
     paths:
        - '.github/workflows/OCV-Contrib-PR-4.x-openEuler-CANN.yaml'
+    types:
+       - labeled
   workflow_call:
 
 concurrency:
