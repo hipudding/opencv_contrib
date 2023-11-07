@@ -4,11 +4,10 @@ on:
   pull_request:
     branches:
       - 4.x
-  #   paths:
-  #     - '.github/workflows/OCV-Contrib-PR-4.x-openEuler-CANN.yaml'
-  #   label:
-  #     - 'category:cann'
-  # workflow_call:
+     paths:
+       - '.github/workflows/OCV-Contrib-PR-4.x-openEuler-CANN.yaml'
+     types: [ labeled ]
+   workflow_call:
 
 concurrency:
   group: OCV-Contrib-PR-4.x-openEuler-CANN-${{ github.ref }}
@@ -27,6 +26,7 @@ env:
 
 jobs:
   BuildAndTest:
+    if: contains(github.event.pull_request.labels.*.name, 'category:cann')
     runs-on: self-hosted
     defaults:
       run:
