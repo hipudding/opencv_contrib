@@ -3,8 +3,8 @@
 // of this distribution and at http://opencv.org/license.html.
 
 #include "precomp.hpp"
-#include "../kernels/aclrtlaunch_threshold_opencv.h"
-#include "../kernels/threshold_opencv_tiling.h"
+#include "aclrtlaunch_threshold_opencv.h"
+#include "threshold_opencv_tiling.h"
 
 namespace cv
 {

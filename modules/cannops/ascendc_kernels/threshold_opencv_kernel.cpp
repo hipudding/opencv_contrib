@@ -1,6 +1,6 @@
 #include "kernel_operator.h"
 #include "threshold_opencv_tiling.h"
-#include "tiling_kernel.h"
+#include "vector_tiling.h"
 
 using namespace AscendC;
 
