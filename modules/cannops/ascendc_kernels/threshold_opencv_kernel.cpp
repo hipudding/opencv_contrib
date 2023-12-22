@@ -1,6 +1,6 @@
 #include "kernel_operator.h"
-#include "threshold_opencv_tiling.h"
 #include "vector_tiling.h"
+#include "kernel_tiling_types.h"
 
 using namespace AscendC;
 
@@ -65,29 +65,29 @@ class KernelThreshold {
     LocalTensor<uint8_t> mask = tmpQueue.AllocTensor<uint8_t>();
     Duplicate(yLocal, static_cast<T>(tilingData.thresh), len);
     switch (tilingData.threshType) {
-      case THRESH_BINARY:
+      case 0:
         Compare(mask, xLocal, yLocal, CMPMODE::LE, len);
         Duplicate(yLocal, static_cast<T>(0), len);
         Select(yLocal, mask, yLocal, static_cast<T>(tilingData.maxVal),
                SELMODE::VSEL_TENSOR_SCALAR_MODE, len);
         break;
-      case THRESH_BINARY_INV:
+      case 1:
         Compare(mask, xLocal, yLocal, CMPMODE::GT, len);
         Duplicate(yLocal, static_cast<T>(0), len);
         Select(yLocal, mask, yLocal, static_cast<T>(tilingData.maxVal),
                SELMODE::VSEL_TENSOR_SCALAR_MODE, len);
         break;
-      case THRESH_TRUNC:
+      case 2:
         Compare(mask, xLocal, yLocal, CMPMODE::LE, len);
-        Select(yLocal, mask, xLocal, static_cast<T>(tilingData.maxVal),
+        Select(yLocal, mask, xLocal, static_cast<T>(tilingData.thresh),
                SELMODE::VSEL_TENSOR_SCALAR_MODE, len);
         break;
-      case THRESH_TOZERO:
+      case 3:
         Compare(mask, xLocal, yLocal, CMPMODE::GT, len);
         Select(yLocal, mask, xLocal, static_cast<T>(0),
                SELMODE::VSEL_TENSOR_SCALAR_MODE, len);
         break;
-      case THRESH_TOZERO_INV:
+      case 4:
         Compare(mask, xLocal, yLocal, CMPMODE::LE, len);
         Select(yLocal, mask, xLocal, static_cast<T>(0),
                SELMODE::VSEL_TENSOR_SCALAR_MODE, len);

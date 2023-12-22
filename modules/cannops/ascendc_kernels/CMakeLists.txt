@@ -15,6 +15,5 @@ include(${ASCENDC_CMAKE_DIR}/ascendc.cmake)
 ascendc_library(ascendc_kernels STATIC
     threshold_opencv_kernel.cpp
 )
-
 #add_executable(test_threshold test_threshold.cpp)
 #target_link_libraries(test_threshold PRIVATE ascendc_kernels)

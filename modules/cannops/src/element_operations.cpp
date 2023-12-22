@@ -3,8 +3,6 @@
 // of this distribution and at http://opencv.org/license.html.
 
 #include "precomp.hpp"
-#include "aclrtlaunch_threshold_opencv.h"
-#include "threshold_opencv_tiling.h"
 
 namespace cv
 {
@@ -445,7 +443,9 @@ double threshold(const AscendMat& src, AscendMat& dst, double thresh, double max
 
     dst.create(src.rows, src.cols, src.type());
 
-    ACLRT_LAUNCH_KERNEL(threshold_opencv)(8, AscendStreamAccessor::getStream(stream), nullptr, nullptr, nullptr);
+    ACLRT_LAUNCH_KERNEL(threshold_opencv)(8, AscendStreamAccessor::getStream(stream), src.data.get(), dst.data.get(), nullptr);
+    stream.addTensorHolder(src.data);
+    stream.addTensorHolder(dst.data);
 
     OperatorRunner runner;
     runner.setOp("Threshold")

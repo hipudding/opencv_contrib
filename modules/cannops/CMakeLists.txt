@@ -19,5 +19,5 @@ ocv_add_samples(opencv_cannops)
 # compile ascnedc kernels.
 add_subdirectory(ascendc_kernels)
 ocv_include_directories(${CMAKE_BINARY_DIR}/include/ascendc_kernels)
-ocv_include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ascendc_kernels)
 ocv_target_link_libraries(opencv_cannops PRIVATE ascendc_kernels)
+ocv_target_link_libraries(opencv_test_cannops PRIVATE ascendc_kernels)

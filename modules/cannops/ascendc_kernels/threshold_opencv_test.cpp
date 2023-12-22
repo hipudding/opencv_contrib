@@ -4,8 +4,7 @@
 #include <iostream>
 #include <unistd.h>
 
-#include "threshold_opencv_tiling.h"
-#include "aclrtlaunch_threshold_opencv.h"
+#include "ascendc_kernels.h"
 
 constexpr int threshold = 200;
 constexpr int maxVal = 255;
@@ -64,7 +63,7 @@ void run_kernel(float* input, float* output, uint32_t size,
 void run_thresh_trunc(float* input, float* output, uint32_t size) {
   std::cout << "run thresh trunc" << std::endl;
   ThresholdOpencvTilingData tiling;
-  tiling.threshType = THRESH_TRUNC;
+  tiling.threshType = 2;
   run_kernel(input, output, size, tiling);
 }
 
@@ -82,7 +81,7 @@ void check_result_thresh_trunc(float* input, float* output, uint32_t size) {
 void run_thresh_binary(float* input, float* output, uint32_t size) {
   std::cout << "run thresh bianry" << std::endl;
   ThresholdOpencvTilingData tiling;
-  tiling.threshType = THRESH_BINARY;
+  tiling.threshType = 0;
   run_kernel(input, output, size, tiling);
 }
 
@@ -100,7 +99,7 @@ void check_result_thresh_binary(float* input, float* output, uint32_t size) {
 void run_thresh_binary_inv(float* input, float* output, uint32_t size) {
   std::cout << "run thresh bianry inv" << std::endl;
   ThresholdOpencvTilingData tiling;
-  tiling.threshType = THRESH_BINARY_INV;
+  tiling.threshType = 1;
   run_kernel(input, output, size, tiling);
 }
 
@@ -119,7 +118,7 @@ void check_result_thresh_binary_inv(float* input, float* output,
 void run_thresh_tozero(float* input, float* output, uint32_t size) {
   std::cout << "run thresh tozero" << std::endl;
   ThresholdOpencvTilingData tiling;
-  tiling.threshType = THRESH_TOZERO;
+  tiling.threshType = 3;
   run_kernel(input, output, size, tiling);
 }
 
@@ -137,7 +136,7 @@ void check_result_thresh_tozero(float* input, float* output, uint32_t size) {
 void run_thresh_tozero_inv(float* input, float* output, uint32_t size) {
   std::cout << "run thresh tozero inv" << std::endl;
   ThresholdOpencvTilingData tiling;
-  tiling.threshType = THRESH_TOZERO_INV;
+  tiling.threshType = 4;
   run_kernel(input, output, size, tiling);
 }
 
