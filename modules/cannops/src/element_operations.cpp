@@ -443,49 +443,54 @@ double threshold(const AscendMat& src, AscendMat& dst, double thresh, double max
 
     dst.create(src.rows, src.cols, src.type());
 
-    ACLRT_LAUNCH_KERNEL(threshold_opencv)(8, AscendStreamAccessor::getStream(stream), src.data.get(), dst.data.get(), nullptr);
-    stream.addTensorHolder(src.data);
-    stream.addTensorHolder(dst.data);
 
-    OperatorRunner runner;
-    runner.setOp("Threshold")
-        .addInput(src, "x")
-        .addOutput(threshMat, "y")
-        .addAttr((float)thresh, "threshold")
-        .run(stream);
+    ThresholdOpencvTilingData tiling;
+    tiling.maxVal = maxval;
+    tiling.thresh = thresh;
+    tiling.totalLength = src.rows * src.cols * src.channels();
+    tiling.threshType = type;
 
-    // THRESH_*_INV, THRESH_TRUNC need a inverse threshMat.
-    // THRESH_BINARY_INV = 1, THRESH_TRUNC = 2, THRESH_TOZERO_INV = 4,
-    if (type == 1 || type == 2 || type == 4)
-    {
-        AscendMat threshInvMat(src.size(), src.type());
-        AscendMat ones(src.size(), src.type());
-        Scalar s(1, 1, 1, 1);
-        ones.setTo(s, stream);
-        arithm_op(ones, threshMat, threshInvMat, "Sub", stream);
+    kernel_launch(aclrtlaunch_threshold_opencv, stream, tiling, src.data.get(), dst.data.get());
 
-        if (type == 1)
-            arithm_op(threshInvMat, (float)maxval, dst, "Muls", stream);
-        else if (type == 2)
-        {
-            AscendMat ToZeroInvMat(src.size(), src.type());
-            AscendMat TruncMat(src.size(), src.type());
-            arithm_op(threshInvMat, src, ToZeroInvMat, "Mul", stream);
-            arithm_op(threshMat, (float)thresh, TruncMat, "Muls", stream);
-            arithm_op(ToZeroInvMat, TruncMat, dst, "Add", stream);
-        }
-        else
-            arithm_op(threshInvMat, src, dst, "Mul", stream);
-    }
-    else
-    {
-        if (type == 0) /* THRESH_BINARY = 0 */
-            arithm_op(threshMat, (float)maxval, dst, "Muls", stream);
-        else if (type == 3) /* THRESH_TOZERO = 3 */
-            arithm_op(threshMat, src, dst, "Mul", stream);
-        else
-            CV_Error(Error::StsError, "Unknown/unsupported threshold type");
-    }
+    // OperatorRunner runner;
+    // runner.setOp("Threshold")
+    //     .addInput(src, "x")
+    //     .addOutput(threshMat, "y")
+    //     .addAttr((float)thresh, "threshold")
+    //     .run(stream);
+
+    // // THRESH_*_INV, THRESH_TRUNC need a inverse threshMat.
+    // // THRESH_BINARY_INV = 1, THRESH_TRUNC = 2, THRESH_TOZERO_INV = 4,
+    // if (type == 1 || type == 2 || type == 4)
+    // {
+    //     AscendMat threshInvMat(src.size(), src.type());
+    //     AscendMat ones(src.size(), src.type());
+    //     Scalar s(1, 1, 1, 1);
+    //     ones.setTo(s, stream);
+    //     arithm_op(ones, threshMat, threshInvMat, "Sub", stream);
+
+    //     if (type == 1)
+    //         arithm_op(threshInvMat, (float)maxval, dst, "Muls", stream);
+    //     else if (type == 2)
+    //     {
+    //         AscendMat ToZeroInvMat(src.size(), src.type());
+    //         AscendMat TruncMat(src.size(), src.type());
+    //         arithm_op(threshInvMat, src, ToZeroInvMat, "Mul", stream);
+    //         arithm_op(threshMat, (float)thresh, TruncMat, "Muls", stream);
+    //         arithm_op(ToZeroInvMat, TruncMat, dst, "Add", stream);
+    //     }
+    //     else
+    //         arithm_op(threshInvMat, src, dst, "Mul", stream);
+    // }
+    // else
+    // {
+    //     if (type == 0) /* THRESH_BINARY = 0 */
+    //         arithm_op(threshMat, (float)maxval, dst, "Muls", stream);
+    //     else if (type == 3) /* THRESH_TOZERO = 3 */
+    //         arithm_op(threshMat, src, dst, "Mul", stream);
+    //     else
+    //         CV_Error(Error::StsError, "Unknown/unsupported threshold type");
+    // }
     return thresh;
 }
 

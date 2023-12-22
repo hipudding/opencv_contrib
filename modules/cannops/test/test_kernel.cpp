@@ -1,5 +1,5 @@
 #include "test_precomp.hpp"
-#include "acl/acl.h"
+#include "opencv2/cann_call.hpp"
 
 namespace opencv_test
 {
@@ -24,12 +24,7 @@ TEST(ASCENDC_KERNEL, THRESHOLD)
     tiling.totalLength = img32F.rows * img32F.cols * img32F.channels();
     tiling.threshType = 2;
 
-    uint8_t* tilingDevice;
-    aclrtMalloc((void**)&tilingDevice, sizeof(ThresholdOpencvTilingData), ACL_MEM_MALLOC_NORMAL_ONLY);
-    aclrtMemcpy(tilingDevice, sizeof(tiling), &tiling, sizeof(tiling), ACL_MEMCPY_HOST_TO_DEVICE);
-    
-    uint32_t ret = ACLRT_LAUNCH_KERNEL(threshold_opencv)(8, nullptr, npuImg32F.data.get(), npuChecker.data.get(), tilingDevice);
-    aclError err = aclrtSynchronizeStream(nullptr);
+    kernel_launch(aclrtlaunch_threshold_opencv, AscendStream::Null(), tiling, npuImg32F.data.get(), npuChecker.data.get());
 
     npuChecker.download(npuRet);
     EXPECT_MAT_NEAR(cpuRet, npuRet, 10.0f);
