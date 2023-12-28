@@ -3,31 +3,45 @@
 
 namespace opencv_test
 {
-namespace{
+namespace
+{
 
 TEST(ASCENDC_KERNEL, THRESHOLD)
 {
     cv::cann::setDevice(DEVICE_ID);
     Mat cpuRet, npuRet;
+    AscendMat npuImg, npuTmpMat;
 
-    Mat img32F = randomMat(512, 512, CV_32FC3, 0.0f, 255.0f);
-    cv::threshold(img32F, cpuRet, 200, 255, 2);
+    // opencv do not support CV_8S, CV_32S, CV_16F
+    // ascend do not support CV_16U, CV_64F
+    uint8_t dtypes[] = {CV_8U, CV_16S, CV_32F};
 
-    AscendMat npuImg32F, npuChecker;
-    npuImg32F.upload(img32F);
+    for (uint i = 0; i <= 4; i++)
+    {
+        for (uint j = 0; j < sizeof(dtypes) / sizeof(dtypes[0]); j++)
+        {
+            double thresh = 90;
+            double maxVal = 85;
 
-    npuChecker.create(npuImg32F.rows, npuImg32F.cols, npuImg32F.type());
+            Mat img = randomMat(512, 512, CV_MAKETYPE(dtypes[j],3), 0.0f, 128.0f);
+            npuImg.upload(img);
+            npuTmpMat.create(npuImg.rows, npuImg.cols, npuImg.type());
 
-    ThresholdOpencvTilingData tiling;
-    tiling.maxVal = 255;
-    tiling.thresh = 200;
-    tiling.totalLength = img32F.rows * img32F.cols * img32F.channels();
-    tiling.threshType = 2;
+            cv::threshold(img, cpuRet, thresh, maxVal, i);
+            ThresholdOpencvTilingData tiling;
+            tiling.maxVal = maxVal;
+            tiling.thresh = thresh;
+            tiling.totalLength = img.rows * img.cols * img.channels();
+            tiling.threshType = i;
+            tiling.dtype = dtypes[j];
+            kernel_launch(aclrtlaunch_threshold_opencv, AscendStream::Null(), tiling,
+                          npuImg.data.get(), npuTmpMat.data.get());
 
-    kernel_launch(aclrtlaunch_threshold_opencv, AscendStream::Null(), tiling, npuImg32F.data.get(), npuChecker.data.get());
+            npuTmpMat.download(npuRet);
+            EXPECT_MAT_NEAR(cpuRet, npuRet, 10.0f);
+        }
+    }
 
-    npuChecker.download(npuRet);
-    EXPECT_MAT_NEAR(cpuRet, npuRet, 10.0f);
     cv::cann::resetDevice();
 }
 

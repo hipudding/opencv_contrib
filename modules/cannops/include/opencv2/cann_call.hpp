@@ -19,7 +19,7 @@ namespace cv
 {
 namespace cann
 {
-CV_EXPORTS_W void checkAclError(aclError err, const char* file, const int line, const char* func);
+CV_EXPORTS void checkAclError(aclError err, const char* file, const int line, const char* func);
 void checkAclPtr(void* ptr, const char* file, const int line, const char* func);
 #define CV_ACL_SAFE_CALL(expr) checkAclError((expr), __FILE__, __LINE__, CV_Func)
 #define CV_ACL_SAFE_CALL_PTR(expr)                     \
@@ -50,7 +50,7 @@ void aclrtMemsetWarpper(std::shared_ptr<uchar>& ptr, int32_t value, size_t count
 //! Type mapping between opencv and cann.
 aclDataType getACLType(int opencvdepth);
 //! Malloc and upload raw data to devices.
-CV_EXPORTS_W std::shared_ptr<uchar> mallocAndUpload(const void* data, size_t size, AscendStream& stream,
+CV_EXPORTS std::shared_ptr<uchar> mallocAndUpload(const void* data, size_t size, AscendStream& stream,
                                        AscendMat::Allocator* allocator);
 /**
  * @brief Warpper of CANN streams.
@@ -168,7 +168,7 @@ void kernel_launch(KERNEL_TYPE kernel, AscendStream& stream, TILING_TYPE& tiling
     std::shared_ptr<uchar> tilingDevice =
         mallocAndUpload(&tiling, sizeof(TILING_TYPE), stream, AscendMat::defaultAllocator());
     aclrtStream rawStream = AscendStreamAccessor::getStream(stream);
-    CV_ACL_SAFE_CALL(kernel(8, rawStream, tilingDevice.get(), args...));
+    CV_ACL_SAFE_CALL(kernel(1, rawStream, tilingDevice.get(), args...));
     if (rawStream == nullptr)
     {
         stream.waitForCompletion();
